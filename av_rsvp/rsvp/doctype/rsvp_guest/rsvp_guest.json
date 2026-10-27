@@ -1,0 +1,96 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Guest",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "guest_name",
+  "email",
+  "phone",
+  "organisation",
+  "language",
+  "contact"
+ ],
+ "fields": [
+  {
+   "fieldname": "guest_name",
+   "label": "Guest Name",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "email",
+   "label": "Email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "options": "Email"
+  },
+  {
+   "fieldname": "phone",
+   "label": "Phone",
+   "fieldtype": "Data",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "organisation",
+   "label": "Organisation",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "language",
+   "label": "Language",
+   "fieldtype": "Select",
+   "default": "English",
+   "options": "English\nSwahili"
+  },
+  {
+   "fieldname": "contact",
+   "label": "Contact",
+   "fieldtype": "Link",
+   "options": "Contact"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "guest_name",
+ "search_fields": "guest_name,email,phone",
+ "allow_import": 1
+}

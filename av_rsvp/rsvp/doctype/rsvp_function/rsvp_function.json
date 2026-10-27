@@ -1,0 +1,117 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Function",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "event",
+  "function_title",
+  "starts_on",
+  "ends_on",
+  "venue",
+  "capacity",
+  "meal_options",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "label": "Event",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Event",
+   "search_index": 1
+  },
+  {
+   "fieldname": "function_title",
+   "label": "Function Title",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "starts_on",
+   "label": "Starts On",
+   "fieldtype": "Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ends_on",
+   "label": "Ends On",
+   "fieldtype": "Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "venue",
+   "label": "Venue",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "capacity",
+   "label": "Capacity",
+   "fieldtype": "Int",
+   "default": "0",
+   "description": "0 means unlimited. Counts confirmed people."
+  },
+  {
+   "fieldname": "meal_options",
+   "label": "Meal Options",
+   "fieldtype": "Small Text",
+   "description": "One meal choice per line."
+  },
+  {
+   "fieldname": "enabled",
+   "label": "Enabled",
+   "fieldtype": "Check",
+   "default": "1"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "Check-in Operator",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "function_title"
+}

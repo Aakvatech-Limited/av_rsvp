@@ -1,0 +1,115 @@
+{
+ "doctype": "Sidebar",
+ "name": "RSVP",
+ "title": "RSVP",
+ "module": "RSVP",
+ "app": "av_rsvp",
+ "standard": 1,
+ "header_icon": "calendar",
+ "items": [
+  {
+   "type": "Link",
+   "label": "Home",
+   "link_type": "Workspace",
+   "link_to": "RSVP"
+  },
+  {
+   "type": "Section Break",
+   "label": "Operations",
+   "collapsible": 1
+  },
+  {
+   "type": "Link",
+   "label": "Event Overview",
+   "link_type": "Page",
+   "link_to": "rsvp-overview"
+  },
+  {
+   "type": "Link",
+   "label": "Events",
+   "link_type": "DocType",
+   "link_to": "RSVP Event"
+  },
+  {
+   "type": "Link",
+   "label": "Invitations",
+   "link_type": "DocType",
+   "link_to": "RSVP Invitation"
+  },
+  {
+   "type": "Link",
+   "label": "Attendees",
+   "link_type": "DocType",
+   "link_to": "RSVP Attendee"
+  },
+  {
+   "type": "Link",
+   "label": "Function Responses",
+   "link_type": "DocType",
+   "link_to": "RSVP Function Response"
+  },
+  {
+   "type": "Link",
+   "label": "Check-in",
+   "link_type": "Page",
+   "link_to": "rsvp-checkin"
+  },
+  {
+   "type": "Section Break",
+   "label": "Masters",
+   "collapsible": 1
+  },
+  {
+   "type": "Link",
+   "label": "Guest Directory",
+   "link_type": "DocType",
+   "link_to": "RSVP Guest"
+  },
+  {
+   "type": "Link",
+   "label": "Event Functions",
+   "link_type": "DocType",
+   "link_to": "RSVP Function"
+  },
+  {
+   "type": "Section Break",
+   "label": "Reports",
+   "collapsible": 1
+  },
+  {
+   "type": "Link",
+   "label": "Guest Register",
+   "link_type": "Report",
+   "link_to": "RSVP Guest Register"
+  },
+  {
+   "type": "Link",
+   "label": "Catering Requirements",
+   "link_type": "Report",
+   "link_to": "RSVP Catering Requirements"
+  },
+  {
+   "type": "Link",
+   "label": "Check-in Register",
+   "link_type": "Report",
+   "link_to": "RSVP Check-in Register"
+  },
+  {
+   "type": "Section Break",
+   "label": "Settings",
+   "collapsible": 1
+  },
+  {
+   "type": "Link",
+   "label": "RSVP Settings",
+   "link_type": "DocType",
+   "link_to": "RSVP Settings"
+  },
+  {
+   "type": "Link",
+   "label": "Message Logs",
+   "link_type": "DocType",
+   "link_to": "RSVP Message Log"
+  }
+ ]
+}

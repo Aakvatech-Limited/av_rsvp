@@ -1,0 +1,198 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Event",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "RSVP-EVT-.YYYY.-.#####",
+ "track_changes": 1,
+ "field_order": [
+  "event_title",
+  "status",
+  "host_name",
+  "banner",
+  "description",
+  "schedule",
+  "starts_on",
+  "ends_on",
+  "timezone",
+  "rsvp_deadline",
+  "venue",
+  "map_url",
+  "registration",
+  "multiple_functions",
+  "allow_maybe",
+  "enable_waitlist",
+  "contact_email",
+  "contact_phone",
+  "team",
+  "privacy_notice"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_title",
+   "label": "Event Title",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "default": "Draft",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "Draft\nPublished\nRegistration Closed\nCompleted\nCancelled",
+   "search_index": 1
+  },
+  {
+   "fieldname": "host_name",
+   "label": "Host Name",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "banner",
+   "label": "Banner",
+   "fieldtype": "Attach Image"
+  },
+  {
+   "fieldname": "description",
+   "label": "Description",
+   "fieldtype": "Text Editor"
+  },
+  {
+   "fieldname": "schedule",
+   "label": "Schedule",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "starts_on",
+   "label": "Starts On",
+   "fieldtype": "Datetime",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ends_on",
+   "label": "Ends On",
+   "fieldtype": "Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "timezone",
+   "label": "Timezone",
+   "fieldtype": "Data",
+   "default": "Africa/Dar_es_Salaam",
+   "reqd": 1,
+   "description": "Guests see event dates in this timezone. Desk date entry follows your Frappe user timezone."
+  },
+  {
+   "fieldname": "rsvp_deadline",
+   "label": "Rsvp Deadline",
+   "fieldtype": "Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "venue",
+   "label": "Venue",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "map_url",
+   "label": "Map Url",
+   "fieldtype": "Data",
+   "description": "HTTPS map link"
+  },
+  {
+   "fieldname": "registration",
+   "label": "Registration",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "multiple_functions",
+   "label": "Multiple Functions",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "allow_maybe",
+   "label": "Allow Maybe",
+   "fieldtype": "Check",
+   "default": "1"
+  },
+  {
+   "fieldname": "enable_waitlist",
+   "label": "Enable Waitlist",
+   "fieldtype": "Check",
+   "default": "1"
+  },
+  {
+   "fieldname": "contact_email",
+   "label": "Contact Email",
+   "fieldtype": "Data",
+   "options": "Email"
+  },
+  {
+   "fieldname": "contact_phone",
+   "label": "Contact Phone",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "team",
+   "label": "Team",
+   "fieldtype": "Table",
+   "options": "RSVP Event Team"
+  },
+  {
+   "fieldname": "privacy_notice",
+   "label": "Privacy Notice",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "Check-in Operator",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "event_title",
+ "search_fields": "event_title,venue"
+}

@@ -1,0 +1,16 @@
+{
+ "doctype": "Dock",
+ "name": "av_rsvp",
+ "app": "av_rsvp",
+ "user": "",
+ "standard": 1,
+ "items": [
+  {
+   "link_type": "Sidebar",
+   "link_to": "RSVP",
+   "icon": "calendar",
+   "title": "RSVP",
+   "hidden": 0
+  }
+ ]
+}

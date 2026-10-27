@@ -1,0 +1,154 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Attendee",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "event",
+  "invitation",
+  "attendee_name",
+  "age_group",
+  "dietary_requirements",
+  "accessibility_requests",
+  "active",
+  "entry_nonce",
+  "entry_hash"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "label": "Event",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Event",
+   "search_index": 1
+  },
+  {
+   "fieldname": "invitation",
+   "label": "Invitation",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "options": "RSVP Invitation",
+   "search_index": 1
+  },
+  {
+   "fieldname": "attendee_name",
+   "label": "Attendee Name",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "age_group",
+   "label": "Age Group",
+   "fieldtype": "Select",
+   "default": "Adult",
+   "in_list_view": 1,
+   "options": "Adult\nChild"
+  },
+  {
+   "fieldname": "dietary_requirements",
+   "label": "Dietary Requirements",
+   "fieldtype": "Small Text",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "accessibility_requests",
+   "label": "Accessibility Requests",
+   "fieldtype": "Small Text",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "active",
+   "label": "Active",
+   "fieldtype": "Check",
+   "default": "1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entry_nonce",
+   "label": "Entry Nonce",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "entry_hash",
+   "label": "Entry Hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1,
+   "unique": 1,
+   "permlevel": 2
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "permlevel": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "permlevel": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "permlevel": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "attendee_name"
+}

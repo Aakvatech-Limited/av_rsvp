@@ -1,0 +1,24 @@
+{
+ "doctype": "Report",
+ "name": "RSVP Guest Register",
+ "report_name": "RSVP Guest Register",
+ "module": "RSVP",
+ "is_standard": "Yes",
+ "report_type": "Script Report",
+ "ref_doctype": "RSVP Invitation",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "RSVP Administrator"
+  },
+  {
+   "role": "Event Manager"
+  },
+  {
+   "role": "Event Coordinator"
+  }
+ ],
+ "add_total_row": 0
+}

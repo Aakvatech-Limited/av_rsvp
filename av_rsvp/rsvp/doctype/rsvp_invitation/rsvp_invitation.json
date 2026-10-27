@@ -1,0 +1,211 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Invitation",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "RSVP-INV-.YYYY.-.#####",
+ "track_changes": 1,
+ "field_order": [
+  "event",
+  "guest",
+  "guest_name",
+  "email",
+  "phone",
+  "category",
+  "max_attendees",
+  "response_status",
+  "delivery_status",
+  "responded_on",
+  "response_by",
+  "last_reminded_on",
+  "revoked",
+  "notes",
+  "access_nonce",
+  "token_hash",
+  "token_expires_on",
+  "invite_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "label": "Event",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Event",
+   "search_index": 1
+  },
+  {
+   "fieldname": "guest",
+   "label": "Guest",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "options": "RSVP Guest"
+  },
+  {
+   "fieldname": "guest_name",
+   "label": "Guest Name",
+   "fieldtype": "Data",
+   "fetch_from": "guest.guest_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "email",
+   "label": "Email",
+   "fieldtype": "Data",
+   "fetch_from": "guest.email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "phone",
+   "label": "Phone",
+   "fieldtype": "Data",
+   "fetch_from": "guest.phone"
+  },
+  {
+   "fieldname": "category",
+   "label": "Category",
+   "fieldtype": "Select",
+   "default": "Individual",
+   "options": "Individual\nFamily\nOrganisation\nVIP"
+  },
+  {
+   "fieldname": "max_attendees",
+   "label": "Max Attendees",
+   "fieldtype": "Int",
+   "default": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_status",
+   "label": "Response Status",
+   "fieldtype": "Select",
+   "default": "Pending",
+   "read_only": 1,
+   "in_list_view": 1,
+   "options": "Pending\nAttending\nDeclined\nMaybe",
+   "search_index": 1
+  },
+  {
+   "fieldname": "delivery_status",
+   "label": "Delivery Status",
+   "fieldtype": "Select",
+   "default": "Not Sent",
+   "read_only": 1,
+   "options": "Not Sent\nQueued\nSent\nFailed"
+  },
+  {
+   "fieldname": "responded_on",
+   "label": "Responded On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_by",
+   "label": "Response By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_reminded_on",
+   "label": "Last Reminded On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revoked",
+   "label": "Revoked",
+   "fieldtype": "Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "label": "Notes",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_nonce",
+   "label": "Access Nonce",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "token_hash",
+   "label": "Token Hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1,
+   "unique": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "token_expires_on",
+   "label": "Token Expires On",
+   "fieldtype": "Datetime",
+   "read_only": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "invite_key",
+   "label": "Invite Key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1,
+   "unique": 1,
+   "permlevel": 2
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "import": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "guest_name",
+ "allow_import": 1
+}
