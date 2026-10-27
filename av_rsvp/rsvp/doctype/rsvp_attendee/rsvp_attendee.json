@@ -23,14 +23,16 @@
    "fieldtype": "Link",
    "reqd": 1,
    "in_list_view": 1,
-   "options": "RSVP Event"
+   "options": "RSVP Event",
+   "search_index": 1
   },
   {
    "fieldname": "invitation",
    "label": "Invitation",
    "fieldtype": "Link",
    "reqd": 1,
-   "options": "RSVP Invitation"
+   "options": "RSVP Invitation",
+   "search_index": 1
   },
   {
    "fieldname": "attendee_name",

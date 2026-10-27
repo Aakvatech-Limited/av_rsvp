@@ -16,7 +16,8 @@
    "fieldtype": "Link",
    "reqd": 1,
    "in_list_view": 1,
-   "options": "User"
+   "options": "User",
+   "search_index": 1
   },
   {
    "fieldname": "access_level",

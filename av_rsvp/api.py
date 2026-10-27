@@ -12,6 +12,7 @@ from av_rsvp.security import (
     check_token,
     current_doc,
     current_rows,
+    current_value,
     digest,
     invitation_url,
     lock_event,
@@ -84,7 +85,11 @@ def share_invitation(invitation):
 
 
 def share_details(doc):
-    event = frappe.get_doc("RSVP Event", doc.event)
+    lock_event(doc.event)
+    doc = current_doc("RSVP Invitation", doc.name)
+    if doc.revoked:
+        frappe.throw("This invitation has been revoked.")
+    event = current_doc("RSVP Event", doc.event)
     if event.status != "Published":
         frappe.throw("Publish the event before sharing invitations.")
     url = invitation_url(doc)
@@ -98,12 +103,12 @@ def revoke_invitation(invitation):
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event, 3)
     lock_event(doc.event)
-    if frappe.db.exists(
+    if current_value(
         "RSVP Check-in",
         {
             "attendee": [
                 "in",
-                frappe.get_all("RSVP Attendee", filters={"invitation": doc.name}, pluck="name") or [""],
+                current_rows("RSVP Attendee", filters={"invitation": doc.name}, pluck="name") or [""],
             ],
             "status": "Checked In",
         },
@@ -114,10 +119,10 @@ def revoke_invitation(invitation):
         doc.revoked = 1
         doc.save(ignore_permissions=True)
         for name in current_rows("RSVP Function Response", filters={"invitation": doc.name}, pluck="name"):
-            row = frappe.get_doc("RSVP Function Response", name)
+            row = current_doc("RSVP Function Response", name)
             row.attendance, row.allocation = "Declined", "Cancelled"
             row.save(ignore_permissions=True)
-        promote_waitlist(frappe.get_doc("RSVP Event", doc.event))
+        promote_waitlist(current_doc("RSVP Event", doc.event))
     return {"revoked": True}
 
 
@@ -143,14 +148,14 @@ def send_invitations(event, pending_only=0):
 
     require_event(event, 2)
     lock_event(event)
-    if frappe.db.get_value("RSVP Event", event, "status") != "Published":
+    if current_value("RSVP Event", event, "status") != "Published":
         frappe.throw("Publish the event before sending invitations.")
     filters = {"event": event, "revoked": 0}
     if int(pending_only):
         filters["response_status"] = "Pending"
     count, skipped = 0, 0
-    for name in frappe.get_all("RSVP Invitation", filters=filters, pluck="name"):
-        doc = frappe.get_doc("RSVP Invitation", name)
+    for name in current_rows("RSVP Invitation", filters=filters, pluck="name"):
+        doc = current_doc("RSVP Invitation", name)
         if not doc.email:
             skipped += 1
             continue
@@ -167,7 +172,7 @@ def promote(event):
     require_event(event, 2)
     lock_event(event)
     with service_write():
-        return {"promoted": promote_waitlist(frappe.get_doc("RSVP Event", event))}
+        return {"promoted": promote_waitlist(current_doc("RSVP Event", event))}
 
 
 @frappe.whitelist(methods=["POST"])

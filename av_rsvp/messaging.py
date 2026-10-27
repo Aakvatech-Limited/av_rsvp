@@ -4,12 +4,21 @@ import frappe
 from frappe.utils import add_days, get_datetime, now_datetime
 
 from av_rsvp.domain import event_now
-from av_rsvp.security import current_doc, digest, invitation_url, lock_event, retry_transaction, service_write
+from av_rsvp.security import (
+    current_doc,
+    current_rows,
+    current_value,
+    digest,
+    invitation_url,
+    lock_event,
+    retry_transaction,
+    service_write,
+)
 
 
 def queue_message(invitation, purpose, dedup_key):
     key = digest(dedup_key)
-    if frappe.db.exists("RSVP Message Log", {"dedup_key": key}):
+    if current_value("RSVP Message Log", {"dedup_key": key}):
         return False
     with service_write():
         doc = frappe.get_doc(
@@ -111,10 +120,12 @@ def send_due_reminders():
     interval = int(frappe.db.get_single_value("RSVP Settings", "reminder_days") or 3)
     for event_name in frappe.get_all("RSVP Event", filters={"status": "Published"}, pluck="name"):
         lock_event(event_name)
-        event = frappe.get_doc("RSVP Event", event_name)
+        event = current_doc("RSVP Event", event_name)
+        if event.status != "Published":
+            continue
         if now_datetime() > get_datetime(event.rsvp_deadline):
             continue
-        for name in frappe.get_all(
+        for name in current_rows(
             "RSVP Invitation",
             filters={
                 "event": event.name,
@@ -124,7 +135,7 @@ def send_due_reminders():
             },
             pluck="name",
         ):
-            invitation = frappe.get_doc("RSVP Invitation", name)
+            invitation = current_doc("RSVP Invitation", name)
             baseline = invitation.last_reminded_on or invitation.creation
             if get_datetime(add_days(baseline, interval)) > now_datetime():
                 continue

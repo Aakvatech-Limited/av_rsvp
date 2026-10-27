@@ -123,6 +123,8 @@ class TestRSVP(IntegrationTestCase):
         self.assertEqual(first["name"], second["name"])
         with self.assertRaises(frappe.ValidationError):
             apply_response(self.invitation.name, "Declined", [])
+        with self.assertRaises(frappe.ValidationError):
+            api.revoke_invitation(self.invitation.name)
         api.reverse_checkin(first["name"], "Wrong person scanned")
         third = check_in(self.function.name, attendee_name=person.name)
         self.assertFalse(third["already_checked_in"])
@@ -220,6 +222,38 @@ class TestRSVP(IntegrationTestCase):
         people[0]["functions"][0]["function"] = other_function
         with self.assertRaises(frappe.ValidationError):
             apply_response(self.invitation.name, "Attending", people)
+
+    def test_message_queue_deduplicates_each_delivery(self):
+        from unittest.mock import patch
+
+        from av_rsvp.messaging import queue_message
+        from av_rsvp.security import lock_event
+
+        lock_event(self.event.name)
+        with patch("frappe.enqueue") as enqueue:
+            self.assertTrue(queue_message(self.invitation, "Invitation", "one-test-delivery"))
+            self.assertFalse(queue_message(self.invitation, "Invitation", "one-test-delivery"))
+            self.assertEqual(enqueue.call_count, 1)
+
+    def test_portal_and_calendar_convert_site_timestamps(self):
+        from zoneinfo import ZoneInfo
+
+        from frappe.utils import get_system_timezone
+
+        from av_rsvp.services import snapshot
+
+        result = snapshot(self.invitation, self.event)
+        expected = (
+            self.event.starts_on.replace(tzinfo=ZoneInfo(get_system_timezone()))
+            .astimezone(ZoneInfo(self.event.timezone))
+            .replace(tzinfo=None)
+        )
+        self.assertEqual(result["event"]["starts_on"], expected.isoformat(sep=" "))
+        calendar = api.calendar(token_for(self.invitation.access_nonce, "invitation"))
+        expected_utc = self.event.starts_on.replace(tzinfo=ZoneInfo(get_system_timezone())).astimezone(
+            ZoneInfo("UTC")
+        )
+        self.assertIn("DTSTART:" + expected_utc.strftime("%Y%m%dT%H%M%SZ"), calendar["content"])
 
 
 class TestConcurrentCapacity(IntegrationTestCase):

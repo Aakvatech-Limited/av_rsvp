@@ -32,7 +32,8 @@
    "fieldtype": "Link",
    "reqd": 1,
    "in_list_view": 1,
-   "options": "RSVP Event"
+   "options": "RSVP Event",
+   "search_index": 1
   },
   {
    "fieldname": "guest",
@@ -83,7 +84,8 @@
    "default": "Pending",
    "read_only": 1,
    "in_list_view": 1,
-   "options": "Pending\nAttending\nDeclined\nMaybe"
+   "options": "Pending\nAttending\nDeclined\nMaybe",
+   "search_index": 1
   },
   {
    "fieldname": "delivery_status",

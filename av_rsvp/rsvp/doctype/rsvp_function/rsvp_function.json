@@ -22,7 +22,8 @@
    "fieldtype": "Link",
    "reqd": 1,
    "in_list_view": 1,
-   "options": "RSVP Event"
+   "options": "RSVP Event",
+   "search_index": 1
   },
   {
    "fieldname": "function_title",
