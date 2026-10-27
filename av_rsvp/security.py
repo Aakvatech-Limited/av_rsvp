@@ -121,3 +121,25 @@ def display_datetime(value, timezone):
         .replace(tzinfo=None)
         .isoformat(sep=" ")
     )
+
+
+def retry_transaction(method):
+    """Retry a complete API operation, never a fragment of a caller's transaction.
+
+    MariaDB snapshot isolation can reject a locking read after a competing request
+    commits. A full rollback also discards after-commit email jobs from the attempt.
+    Only use at request boundaries that have performed no earlier writes.
+    """
+    from functools import wraps
+
+    @wraps(method)
+    def wrapped(*args, **kwargs):
+        for attempt in range(3):
+            try:
+                return method(*args, **kwargs)
+            except frappe.QueryDeadlockError:
+                frappe.db.rollback()
+                if attempt == 2:
+                    raise
+
+    return wrapped

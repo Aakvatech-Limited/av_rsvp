@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import add_days, get_datetime, now_datetime
 
 from av_rsvp.domain import event_now
-from av_rsvp.security import current_doc, digest, invitation_url, lock_event, service_write
+from av_rsvp.security import current_doc, digest, invitation_url, lock_event, retry_transaction, service_write
 
 
 def queue_message(invitation, purpose, dedup_key):
@@ -26,6 +26,7 @@ def queue_message(invitation, purpose, dedup_key):
     return True
 
 
+@retry_transaction
 def deliver_message(log_name):
     log = frappe.get_doc("RSVP Message Log", log_name)
     lock_event(log.event)
@@ -82,6 +83,7 @@ def deliver_message(log_name):
         frappe.log_error(title="AV RSVP email queue failure")
 
 
+@retry_transaction
 def sync_delivery_status():
     for row in frappe.get_all(
         "RSVP Message Log",
@@ -102,6 +104,7 @@ def sync_delivery_status():
             frappe.db.set_value("RSVP Invitation", row.invitation, "delivery_status", mapped)
 
 
+@retry_transaction
 def send_due_reminders():
     if not frappe.db.get_single_value("RSVP Settings", "enable_reminders"):
         return

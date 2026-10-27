@@ -1,5 +1,6 @@
 import csv
 import io
+from copy import deepcopy
 from urllib.parse import quote
 
 import frappe
@@ -15,6 +16,7 @@ from av_rsvp.security import (
     invitation_url,
     lock_event,
     new_nonce,
+    retry_transaction,
     service_write,
     token_for,
 )
@@ -30,6 +32,7 @@ def private_response():
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=60, seconds=60)
+@retry_transaction
 def get_invitation(token):
     private_response()
     invitation, event = check_token(token)
@@ -38,13 +41,14 @@ def get_invitation(token):
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=20, seconds=60)
+@retry_transaction
 def respond(token, response, people, notes=""):
     private_response()
     invitation, _event = check_token(token)
     return apply_response(
         invitation.name,
         response,
-        frappe.parse_json(people),
+        deepcopy(frappe.parse_json(people)),
         notes,
         actor="Guest via private invitation",
         expected_token_hash=digest(token),
@@ -52,6 +56,7 @@ def respond(token, response, people, notes=""):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def staff_invitation(invitation):
     private_response()
     doc = frappe.get_doc("RSVP Invitation", invitation)
@@ -60,19 +65,25 @@ def staff_invitation(invitation):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def record_response(invitation, response, people, notes=""):
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event)
-    return apply_response(doc.name, response, frappe.parse_json(people), notes)
+    return apply_response(doc.name, response, deepcopy(frappe.parse_json(people)), notes)
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def share_invitation(invitation):
     private_response()
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event)
     if doc.revoked:
         frappe.throw("This invitation has been revoked.")
+    return share_details(doc)
+
+
+def share_details(doc):
     event = frappe.get_doc("RSVP Event", doc.event)
     if event.status != "Published":
         frappe.throw("Publish the event before sharing invitations.")
@@ -82,6 +93,7 @@ def share_invitation(invitation):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def revoke_invitation(invitation):
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event, 3)
@@ -110,6 +122,7 @@ def revoke_invitation(invitation):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def renew_invitation(invitation):
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event, 3)
@@ -120,10 +133,11 @@ def renew_invitation(invitation):
         doc.token_hash = digest(token_for(doc.access_nonce, "invitation"))
         doc.revoked = 0
         doc.save(ignore_permissions=True)
-    return share_invitation(doc.name)
+    return share_details(doc)
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def send_invitations(event, pending_only=0):
     from av_rsvp.messaging import queue_message
 
@@ -148,6 +162,7 @@ def send_invitations(event, pending_only=0):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def promote(event):
     require_event(event, 2)
     lock_event(event)
@@ -156,11 +171,13 @@ def promote(event):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def register_checkin(function, attendee=None, entry_token=None):
     return check_in(function, attendee, entry_token)
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def reverse_checkin(checkin, reason):
     from av_rsvp.domain import clean_text
 
@@ -182,6 +199,7 @@ def reverse_checkin(checkin, reason):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def event_overview(event, search="", response_status="", page=0):
     require_event(event, 2)
     event_doc = frappe.get_doc("RSVP Event", event)
@@ -256,6 +274,7 @@ def event_overview(event, search="", response_status="", page=0):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def find_attendees(function, search=""):
     function_doc = frappe.get_doc("RSVP Function", function)
     require_event(function_doc.event, 1)
@@ -279,6 +298,7 @@ def find_attendees(function, search=""):
 
 
 @frappe.whitelist(methods=["POST"])
+@retry_transaction
 def export_guests(event):
     require_event(event, 2)
     rows = frappe.get_all(
@@ -324,6 +344,7 @@ def export_guests(event):
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=30, seconds=60)
+@retry_transaction
 def calendar(token):
     from av_rsvp.calendar import calendar_content
 

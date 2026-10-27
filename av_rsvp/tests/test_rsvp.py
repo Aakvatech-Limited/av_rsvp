@@ -278,7 +278,7 @@ class TestConcurrentCapacity(IntegrationTestCase):
                 # Establish a snapshot before contending for the event lock.
                 frappe.db.get_value("RSVP Invitation", invitation, "response_status")
                 barrier.wait()
-                result = apply_response(
+                result = api.record_response(
                     invitation,
                     "Attending",
                     [

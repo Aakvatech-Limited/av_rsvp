@@ -59,7 +59,7 @@ Open **AV RSVP → RSVP** from the Apps screen. The workspace links to Event Ove
 
 An invitation is a household/company booking; an attendee is a person; a function response is that person's place in a particular function. One person attending two functions counts once in Confirmed People and twice in Confirmed Places. Invitation response totals count invitations, not people.
 
-Every state-changing booking/check-in operation locks the event database row. The lock is held until Frappe commits or rolls back the request. Individual unique keys protect duplicate invitations, attendee/function responses and check-in records.
+Every state-changing booking/check-in operation locks the event database row. The lock is held until Frappe commits or rolls back the request. Complete API requests retry up to three times on database deadlocks/snapshot conflicts, rolling back the entire failed attempt first. Individual unique keys protect duplicate invitations, attendee/function responses and check-in records.
 
 Waiting-list promotion is FIFO **per person per function**. A family can be partially confirmed; this release does not promise all-or-nothing group allocation. Released places promote existing waitlisted people before new requests. After increasing capacity, use **Promote waiting list** in Event Overview. Guests receive confirmation emails when their places are promoted.
 
