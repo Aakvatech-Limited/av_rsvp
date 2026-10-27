@@ -83,7 +83,7 @@
    "fieldtype": "Data",
    "default": "Africa/Dar_es_Salaam",
    "reqd": 1,
-   "description": "All event and function dates are entered in this timezone."
+   "description": "Guests see event dates in this timezone. Desk date entry follows your Frappe user timezone."
   },
   {
    "fieldname": "rsvp_deadline",

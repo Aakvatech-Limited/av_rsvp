@@ -220,3 +220,104 @@ class TestRSVP(IntegrationTestCase):
         people[0]["functions"][0]["function"] = other_function
         with self.assertRaises(frappe.ValidationError):
             apply_response(self.invitation.name, "Attending", people)
+
+
+class TestConcurrentCapacity(IntegrationTestCase):
+    def test_last_place_cannot_be_confirmed_twice(self):
+        import os
+        import threading
+        from concurrent.futures import ThreadPoolExecutor
+
+        from av_rsvp.security import current_count, lock_event
+
+        frappe.set_user("Administrator")
+        event = frappe.get_doc(
+            dict(
+                doctype="RSVP Event",
+                event_title="Concurrent capacity test",
+                starts_on=now_datetime() + timedelta(days=30),
+                ends_on=now_datetime() + timedelta(days=31),
+                rsvp_deadline=now_datetime() + timedelta(days=29),
+                timezone="Africa/Dar_es_Salaam",
+                venue="Test venue",
+                enable_waitlist=1,
+            )
+        ).insert()
+        function = frappe.get_doc("RSVP Function", {"event": event.name})
+        function.capacity = 1
+        function.save()
+        event.status = "Published"
+        event.save()
+        guests, invitations = [], []
+        for name in ["Concurrent A", "Concurrent B"]:
+            guest = frappe.get_doc(dict(doctype="RSVP Guest", guest_name=name)).insert()
+            guests.append(guest.name)
+            invitations.append(
+                frappe.get_doc(
+                    dict(
+                        doctype="RSVP Invitation",
+                        event=event.name,
+                        guest=guest.name,
+                        guest_name=name,
+                        max_attendees=1,
+                    )
+                )
+                .insert()
+                .name
+            )
+        # Independent HTTP requests only see committed fixtures.
+        frappe.db.commit()
+        site, sites_path = frappe.local.site, os.path.abspath(frappe.local.sites_path)
+        barrier = threading.Barrier(2, timeout=20)
+
+        def book(invitation):
+            frappe.init(site=site, sites_path=sites_path)
+            frappe.connect()
+            frappe.set_user("Administrator")
+            try:
+                # Establish a snapshot before contending for the event lock.
+                frappe.db.get_value("RSVP Invitation", invitation, "response_status")
+                barrier.wait()
+                result = apply_response(
+                    invitation,
+                    "Attending",
+                    [
+                        dict(
+                            attendee_name=invitation,
+                            age_group="Adult",
+                            functions=[dict(function=function.name, attendance="Attending", meal_choice="")],
+                        )
+                    ],
+                )
+                frappe.db.commit()
+                return result["attendees"][0]["functions"][0]["allocation"]
+            except Exception:
+                frappe.db.rollback()
+                raise
+            finally:
+                frappe.destroy()
+
+        try:
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(book, invitations))
+            lock_event(event.name)
+            self.assertEqual(sorted(results), ["Confirmed", "Waitlisted"])
+            self.assertEqual(
+                current_count("RSVP Function Response", {"event": event.name, "allocation": "Confirmed"}), 1
+            )
+        finally:
+            frappe.db.rollback()
+            # This test deliberately commits across connections; remove only its fixtures.
+            for dt in [
+                "RSVP Check-in",
+                "RSVP Function Response",
+                "RSVP Attendee",
+                "RSVP Message Log",
+                "RSVP Invitation",
+                "RSVP Function",
+            ]:
+                frappe.db.delete(dt, {"event": event.name})
+            frappe.db.delete("RSVP Event Team", {"parent": event.name})
+            frappe.db.delete("RSVP Event", {"name": event.name})
+            frappe.db.delete("RSVP Guest", {"name": ["in", guests]})
+            frappe.db.commit()

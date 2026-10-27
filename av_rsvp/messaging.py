@@ -109,7 +109,7 @@ def send_due_reminders():
     for event_name in frappe.get_all("RSVP Event", filters={"status": "Published"}, pluck="name"):
         lock_event(event_name)
         event = frappe.get_doc("RSVP Event", event_name)
-        if event_now(event.timezone) > get_datetime(event.rsvp_deadline):
+        if now_datetime() > get_datetime(event.rsvp_deadline):
             continue
         for name in frappe.get_all(
             "RSVP Invitation",

@@ -4,9 +4,7 @@ import secrets
 from contextlib import contextmanager
 
 import frappe
-from frappe.utils import get_datetime
-
-from av_rsvp.domain import event_now
+from frappe.utils import get_datetime, now_datetime
 
 
 def digest(value):
@@ -44,7 +42,7 @@ def check_token(token):
         invitation.revoked
         or invitation.token_hash != digest(token)
         or not invitation.token_expires_on
-        or get_datetime(invitation.token_expires_on) < event_now(event.timezone)
+        or get_datetime(invitation.token_expires_on) < now_datetime()
     ):
         invalid_token()
     if event.status in {"Draft", "Cancelled"}:
@@ -107,3 +105,19 @@ def current_doc(*args):
     if len(args) == 1 and isinstance(args[0], dict):
         return frappe.get_doc(args[0])
     return frappe.get_doc(*args, for_update=True)
+
+
+def display_datetime(value, timezone):
+    from zoneinfo import ZoneInfo
+
+    from frappe.utils import get_system_timezone
+
+    if not value:
+        return None
+    return (
+        get_datetime(value)
+        .replace(tzinfo=ZoneInfo(get_system_timezone()))
+        .astimezone(ZoneInfo(timezone))
+        .replace(tzinfo=None)
+        .isoformat(sep=" ")
+    )

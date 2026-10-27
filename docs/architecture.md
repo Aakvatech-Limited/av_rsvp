@@ -45,6 +45,10 @@ A response key is the hash of attendee plus function; invitation uniqueness is e
 
 The native Dock and Sidebar paths and their schemas were checked against upstream Frappe `version-16`, commit `2fcb9397a1f1da353b21e53d2f97ec56653acd02`. The app's minimum is 16.50; deployments should use a current v16 patch release. Current upstream metadata may include refinements absent in early v16.50 versions. CI installs the current v16 branch and validates migration and navigation-record existence. This is not a compatibility claim for v15.
 
+## Dates
+
+Native Datetime fields retain Frappe site-timezone storage and user-timezone Desk input. Deadline/expiry comparisons use site time. Public projections convert event/function dates to the event display timezone; calendar exports convert stored site times to UTC.
+
 ## Operational limits
 
 Guest data is stored on the site's database; this release does not create separate tenant boundaries within one site. Use separate sites when organisers require complete administrative isolation. Waiting lists allocate individuals, check-in requires connectivity, and per-invitation allowances are capped at 100 people. Large-event load tests and a live-site user acceptance pass are required before production rollout.

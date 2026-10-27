@@ -46,7 +46,7 @@ Open **AV RSVP → RSVP** from the Apps screen. The workspace links to Event Ove
 
 ## First event walkthrough
 
-1. Create an **RSVP Event** in Draft. Enter dates in the chosen event timezone, venue and RSVP deadline.
+1. Create an **RSVP Event** in Draft. Enter the dates, venue and RSVP deadline using your normal Frappe user timezone; select the timezone guests should see.
 2. For a single-function event, save and open the automatically created **RSVP Function** to set capacity and meal choices. Capacity `0` means unlimited. For several functions, enable Multiple Functions and create each function within the event dates.
 3. Add team members to the event and assign each the corresponding Frappe role. Roles alone do not grant access to another organiser's events.
 4. Create/import **RSVP Guest** records, then create/import **RSVP Invitation** records linked to the event. Set the maximum number of people per invitation.
@@ -87,7 +87,7 @@ No public role receives DocType CRUD access. Guest endpoints validate invitation
 
 Entry QR codes have a separate purpose and cannot edit an RSVP. The staff user must be assigned to the chosen event before validating a pass. A pass confirms eligibility; it does not prove the presenter's identity.
 
-All event dates use the event timezone. Audit timestamps use the site's normal Frappe timezone. The retention setting records the organiser's policy; **automatic deletion/anonymisation is not implemented**. Set the privacy notice and manage retention through your approved process.
+Datetimes are stored in the site's normal Frappe timezone. Desk date entry follows each staff user's timezone. The guest portal displays dates in the event timezone, and calendar files use UTC. The retention setting records the organiser's policy; **automatic deletion/anonymisation is not implemented**. Set the privacy notice and manage retention through your approved process.
 
 ## Validation
 

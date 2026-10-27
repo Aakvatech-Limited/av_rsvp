@@ -3,13 +3,14 @@
 import frappe
 from frappe.utils import cint, get_datetime, now_datetime
 
-from av_rsvp.domain import allocation_for, clean_text, event_now, validate_people
+from av_rsvp.domain import allocation_for, clean_text, validate_people
 from av_rsvp.security import (
     current_count,
     current_doc,
     current_rows,
     current_value,
     digest,
+    display_datetime,
     lock_event,
     service_write,
     token_for,
@@ -74,6 +75,9 @@ def snapshot(invitation, event):
         from frappe.utils.print_format_generator import get_qr_code
 
         person["entry_qr"] = get_qr_code(person["entry_token"]) if person["entry_token"] else None
+    for function in functions:
+        for key in ["starts_on", "ends_on"]:
+            function[key] = display_datetime(function[key], event.timezone)
     # Explicit projection: no team, guest directory, delivery logs or invitation secrets.
     return dict(
         event={
@@ -96,6 +100,10 @@ def snapshot(invitation, event):
         | {
             "description": frappe.utils.strip_html(event.description or ""),
             "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
+            **{
+                key: display_datetime(event.get(key), event.timezone)
+                for key in ["starts_on", "ends_on", "rsvp_deadline"]
+            },
         },
         notes=invitation.notes,
         invitation=dict(
@@ -105,8 +113,7 @@ def snapshot(invitation, event):
         ),
         functions=functions,
         attendees=people,
-        editable=event.status == "Published"
-        and event_now(event.timezone) <= get_datetime(event.rsvp_deadline),
+        editable=event.status == "Published" and now_datetime() <= get_datetime(event.rsvp_deadline),
     )
 
 
@@ -119,7 +126,7 @@ def apply_response(invitation_name, response, people, notes="", actor=None, expe
         frappe.throw("This invitation link has been replaced.", frappe.PermissionError)
     if invitation.revoked or event.status != "Published":
         frappe.throw("RSVP responses are closed for this event.")
-    if event_now(event.timezone) > get_datetime(event.rsvp_deadline):
+    if now_datetime() > get_datetime(event.rsvp_deadline):
         frappe.throw("The RSVP deadline has passed. Contact the organiser.")
     if response not in {"Attending", "Declined", "Maybe"} or (response == "Maybe" and not event.allow_maybe):
         frappe.throw("Choose a valid attendance response.")

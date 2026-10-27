@@ -329,4 +329,9 @@ def calendar(token):
 
     private_response()
     _invitation, event = check_token(token)
-    return {"filename": "event.ics", "content": calendar_content(event)}
+    from frappe.utils import get_system_timezone
+
+    return {
+        "filename": "event.ics",
+        "content": calendar_content(event, source_timezone=get_system_timezone()),
+    }

@@ -24,8 +24,8 @@ def fold(line):
     return "\r\n".join(chunks + [current])
 
 
-def calendar_content(event):
-    zone = ZoneInfo(event.timezone)
+def calendar_content(event, source_timezone=None):
+    zone = ZoneInfo(source_timezone or event.timezone)
 
     def utc(value):
         dt = datetime.fromisoformat(str(value)).replace(tzinfo=zone)
