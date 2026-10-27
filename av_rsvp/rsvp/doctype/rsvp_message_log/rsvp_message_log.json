@@ -1,0 +1,125 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Message Log",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "event",
+  "invitation",
+  "purpose",
+  "recipient",
+  "status",
+  "error",
+  "sent_on",
+  "dedup_key",
+  "email_queue"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "label": "Event",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Event"
+  },
+  {
+   "fieldname": "invitation",
+   "label": "Invitation",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "options": "RSVP Invitation"
+  },
+  {
+   "fieldname": "purpose",
+   "label": "Purpose",
+   "fieldtype": "Select",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "Invitation\nReminder\nConfirmation"
+  },
+  {
+   "fieldname": "recipient",
+   "label": "Recipient",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "default": "Queued",
+   "in_list_view": 1,
+   "options": "Queued\nSent\nFailed"
+  },
+  {
+   "fieldname": "error",
+   "label": "Error",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "sent_on",
+   "label": "Sent On",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "dedup_key",
+   "label": "Dedup Key",
+   "fieldtype": "Data",
+   "unique": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "email_queue",
+   "label": "Email Queue",
+   "fieldtype": "Link",
+   "options": "Email Queue",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

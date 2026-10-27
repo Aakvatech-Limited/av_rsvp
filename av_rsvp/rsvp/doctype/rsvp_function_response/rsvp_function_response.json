@@ -1,0 +1,163 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Function Response",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "event",
+  "invitation",
+  "attendee",
+  "function",
+  "attendance",
+  "allocation",
+  "meal_choice",
+  "waitlisted_on",
+  "response_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "label": "Event",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Event"
+  },
+  {
+   "fieldname": "invitation",
+   "label": "Invitation",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "options": "RSVP Invitation"
+  },
+  {
+   "fieldname": "attendee",
+   "label": "Attendee",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Attendee"
+  },
+  {
+   "fieldname": "function",
+   "label": "Function",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Function"
+  },
+  {
+   "fieldname": "attendance",
+   "label": "Attendance",
+   "fieldtype": "Select",
+   "reqd": 1,
+   "read_only": 1,
+   "options": "Attending\nDeclined\nMaybe"
+  },
+  {
+   "fieldname": "allocation",
+   "label": "Allocation",
+   "fieldtype": "Select",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "options": "Confirmed\nWaitlisted\nUnallocated\nCancelled"
+  },
+  {
+   "fieldname": "meal_choice",
+   "label": "Meal Choice",
+   "fieldtype": "Data",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "waitlisted_on",
+   "label": "Waitlisted On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_key",
+   "label": "Response Key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "unique": 1,
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Check-in Operator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "permlevel": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "permlevel": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "permlevel": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

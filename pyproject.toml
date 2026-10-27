@@ -1,0 +1,23 @@
+[build-system]
+requires = ["flit_core>=3.9,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "av_rsvp"
+authors = [{name = "Aakvatech Limited", email = "info@aakvatech.com"}]
+description = "Invitations, guest responses, attendance and event check-in for Frappe"
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+dynamic = ["version"]
+dependencies = []
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.50.0,<17.0.0"
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]

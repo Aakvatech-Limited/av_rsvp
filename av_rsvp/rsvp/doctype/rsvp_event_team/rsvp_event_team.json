@@ -1,0 +1,35 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Event Team",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "user",
+  "access_level"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "label": "User",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "access_level",
+   "label": "Access Level",
+   "fieldtype": "Select",
+   "reqd": 1,
+   "default": "Event Coordinator",
+   "in_list_view": 1,
+   "options": "Event Manager\nEvent Coordinator\nCheck-in Operator"
+  }
+ ],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "istable": 1
+}

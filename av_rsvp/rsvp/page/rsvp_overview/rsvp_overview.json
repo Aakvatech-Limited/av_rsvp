@@ -1,0 +1,22 @@
+{
+ "doctype": "Page",
+ "name": "rsvp-overview",
+ "page_name": "rsvp-overview",
+ "module": "RSVP",
+ "standard": "Yes",
+ "title": "Event Overview",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "RSVP Administrator"
+  },
+  {
+   "role": "Event Manager"
+  },
+  {
+   "role": "Event Coordinator"
+  }
+ ]
+}

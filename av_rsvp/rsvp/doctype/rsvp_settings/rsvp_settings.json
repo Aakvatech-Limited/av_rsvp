@@ -1,0 +1,78 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Settings",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "brand_name",
+  "default_sender",
+  "reminder_days",
+  "enable_reminders",
+  "retention_days",
+  "privacy_notice"
+ ],
+ "fields": [
+  {
+   "fieldname": "brand_name",
+   "label": "Brand Name",
+   "fieldtype": "Data",
+   "default": "AV RSVP"
+  },
+  {
+   "fieldname": "default_sender",
+   "label": "Default Sender",
+   "fieldtype": "Link",
+   "options": "Email Account"
+  },
+  {
+   "fieldname": "reminder_days",
+   "label": "Reminder Days",
+   "fieldtype": "Int",
+   "default": "3"
+  },
+  {
+   "fieldname": "enable_reminders",
+   "label": "Enable Reminders",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "retention_days",
+   "label": "Retention Days",
+   "fieldtype": "Int",
+   "default": "365"
+  },
+  {
+   "fieldname": "privacy_notice",
+   "label": "Privacy Notice",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "issingle": 1
+}

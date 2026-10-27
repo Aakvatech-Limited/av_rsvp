@@ -1,0 +1,158 @@
+{
+ "doctype": "Workspace",
+ "name": "RSVP",
+ "label": "RSVP",
+ "title": "RSVP",
+ "module": "RSVP",
+ "standard": 1,
+ "type": "Workspace",
+ "public": 1,
+ "icon": "calendar",
+ "content": "[{\"id\": \"welcome\", \"type\": \"header\", \"data\": {\"text\": \"<b>AV RSVP</b>\", \"col\": 12}}, {\"id\": \"quick0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Event Overview\", \"col\": 4}}, {\"id\": \"quick1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Check-in\", \"col\": 4}}, {\"id\": \"quick2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Events\", \"col\": 4}}, {\"id\": \"operations\", \"type\": \"card\", \"data\": {\"card_name\": \"Operations\", \"col\": 4}}, {\"id\": \"masters\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"settings\", \"type\": \"card\", \"data\": {\"card_name\": \"Settings\", \"col\": 4}}]",
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "Operations"
+  },
+  {
+   "type": "Link",
+   "label": "Event Overview",
+   "link_type": "Page",
+   "link_to": "rsvp-overview",
+   "is_query_report": 0
+  },
+  {
+   "type": "Link",
+   "label": "Events",
+   "link_type": "DocType",
+   "link_to": "RSVP Event",
+   "is_query_report": 0
+  },
+  {
+   "type": "Link",
+   "label": "Invitations",
+   "link_type": "DocType",
+   "link_to": "RSVP Invitation",
+   "is_query_report": 0
+  },
+  {
+   "type": "Link",
+   "label": "Attendees",
+   "link_type": "DocType",
+   "link_to": "RSVP Attendee",
+   "is_query_report": 0
+  },
+  {
+   "type": "Link",
+   "label": "Function Responses",
+   "link_type": "DocType",
+   "link_to": "RSVP Function Response",
+   "is_query_report": 0
+  },
+  {
+   "type": "Link",
+   "label": "Check-in",
+   "link_type": "Page",
+   "link_to": "rsvp-checkin",
+   "is_query_report": 0
+  },
+  {
+   "type": "Card Break",
+   "label": "Masters"
+  },
+  {
+   "type": "Link",
+   "label": "Guest Directory",
+   "link_type": "DocType",
+   "link_to": "RSVP Guest",
+   "is_query_report": 0
+  },
+  {
+   "type": "Link",
+   "label": "Event Functions",
+   "link_type": "DocType",
+   "link_to": "RSVP Function",
+   "is_query_report": 0
+  },
+  {
+   "type": "Card Break",
+   "label": "Reports"
+  },
+  {
+   "type": "Link",
+   "label": "Guest Register",
+   "link_type": "Report",
+   "link_to": "RSVP Guest Register",
+   "is_query_report": 1
+  },
+  {
+   "type": "Link",
+   "label": "Catering Requirements",
+   "link_type": "Report",
+   "link_to": "RSVP Catering Requirements",
+   "is_query_report": 1
+  },
+  {
+   "type": "Link",
+   "label": "Check-in Register",
+   "link_type": "Report",
+   "link_to": "RSVP Check-in Register",
+   "is_query_report": 1
+  },
+  {
+   "type": "Card Break",
+   "label": "Settings"
+  },
+  {
+   "type": "Link",
+   "label": "RSVP Settings",
+   "link_type": "DocType",
+   "link_to": "RSVP Settings",
+   "is_query_report": 0
+  },
+  {
+   "type": "Link",
+   "label": "Message Logs",
+   "link_type": "DocType",
+   "link_to": "RSVP Message Log",
+   "is_query_report": 0
+  }
+ ],
+ "shortcuts": [
+  {
+   "label": "Event Overview",
+   "type": "Page",
+   "link_to": "rsvp-overview"
+  },
+  {
+   "label": "Check-in",
+   "type": "Page",
+   "link_to": "rsvp-checkin"
+  },
+  {
+   "label": "Events",
+   "type": "DocType",
+   "link_to": "RSVP Event",
+   "doc_view": "List"
+  }
+ ],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "RSVP Administrator"
+  },
+  {
+   "role": "Event Manager"
+  },
+  {
+   "role": "Event Coordinator"
+  },
+  {
+   "role": "Check-in Operator"
+  }
+ ],
+ "charts": [],
+ "number_cards": []
+}

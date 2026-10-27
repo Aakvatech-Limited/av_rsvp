@@ -1,0 +1,27 @@
+{
+ "doctype": "Report",
+ "name": "RSVP Check-in Register",
+ "report_name": "RSVP Check-in Register",
+ "module": "RSVP",
+ "is_standard": "Yes",
+ "report_type": "Script Report",
+ "ref_doctype": "RSVP Check-in",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "RSVP Administrator"
+  },
+  {
+   "role": "Event Manager"
+  },
+  {
+   "role": "Event Coordinator"
+  },
+  {
+   "role": "Check-in Operator"
+  }
+ ],
+ "add_total_row": 0
+}

@@ -1,0 +1,26 @@
+[
+ {
+  "doctype": "Role",
+  "role_name": "RSVP Administrator",
+  "name": "RSVP Administrator",
+  "desk_access": 1
+ },
+ {
+  "doctype": "Role",
+  "role_name": "Event Manager",
+  "name": "Event Manager",
+  "desk_access": 1
+ },
+ {
+  "doctype": "Role",
+  "role_name": "Event Coordinator",
+  "name": "Event Coordinator",
+  "desk_access": 1
+ },
+ {
+  "doctype": "Role",
+  "role_name": "Check-in Operator",
+  "name": "Check-in Operator",
+  "desk_access": 1
+ }
+]

@@ -1,0 +1,149 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Check-in",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "event",
+  "function",
+  "attendee",
+  "response",
+  "status",
+  "checked_in_on",
+  "checked_in_by",
+  "reversed_on",
+  "reversed_by",
+  "reversal_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "label": "Event",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Event"
+  },
+  {
+   "fieldname": "function",
+   "label": "Function",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Function"
+  },
+  {
+   "fieldname": "attendee",
+   "label": "Attendee",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "RSVP Attendee"
+  },
+  {
+   "fieldname": "response",
+   "label": "Response",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "unique": 1,
+   "options": "RSVP Function Response"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "default": "Checked In",
+   "read_only": 1,
+   "in_list_view": 1,
+   "options": "Checked In\nReversed"
+  },
+  {
+   "fieldname": "checked_in_on",
+   "label": "Checked In On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "checked_in_by",
+   "label": "Checked In By",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "reversed_on",
+   "label": "Reversed On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reversed_by",
+   "label": "Reversed By",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "reversal_reason",
+   "label": "Reversal Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Check-in Operator",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
