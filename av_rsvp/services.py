@@ -283,7 +283,7 @@ def promote_waitlist(event):
 
 
 def check_in(function_name, attendee_name=None, entry_token=None):
-    from av_rsvp.permissions import require_event
+    from av_rsvp.permissions import access_level, require_event
 
     event_name = frappe.db.get_value("RSVP Function", function_name, "event")
     require_event(event_name, 1)
@@ -332,6 +332,7 @@ def check_in(function_name, attendee_name=None, entry_token=None):
                 name=doc.name,
                 attendee_name=attendee.attendee_name,
                 already_checked_in=True,
+                can_reverse=access_level(event.name) >= 2,
                 checked_in_on=doc.checked_in_on,
             )
         doc.status = "Checked In"
@@ -343,5 +344,6 @@ def check_in(function_name, attendee_name=None, entry_token=None):
         name=doc.name,
         attendee_name=attendee.attendee_name,
         already_checked_in=False,
+        can_reverse=access_level(event.name) >= 2,
         checked_in_on=doc.checked_in_on,
     )

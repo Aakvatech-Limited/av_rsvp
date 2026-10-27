@@ -22,7 +22,7 @@ RSVP Event Team is a child table. RSVP Settings is a Single DocType. Attendees, 
 
 Guest read/write/calendar endpoints accept private tokens through POST. Staff endpoints authorize against both assigned event team access and user roles. Generic DocType reads/list queries enforce the same event partition through permission hooks. Explicit field projections prevent guest and check-in APIs from returning internal secrets or unrelated personal information.
 
-Operations that allocate/release capacity, revoke invitations, or record/reverse check-ins serialize on the RSVP Event row using Query Builder `for_update()`. No application service commits the request early. An exception must propagate to the Frappe transaction boundary; callers invoking the services directly must roll back on failure. Email background jobs are queued after commit.
+Operations that allocate/release capacity, revoke invitations, or record/reverse check-ins serialize on the RSVP Event row using Query Builder `for_update()`. Capacity decisions use locking current reads rather than snapshot counts, so a request waiting behind another booking cannot count an older transaction snapshot. No application service commits the request early. An exception must propagate to the Frappe transaction boundary; callers invoking the services directly must roll back on failure. Email background jobs are queued after commit.
 
 Payload validation rejects foreign attendees, unknown/repeated functions, excess guest counts, invalid meals and disallowed Maybe responses before changing booking state. Existing confirmed places survive a replay at full capacity. Cancellation after check-in requires an explicit staff reversal.
 

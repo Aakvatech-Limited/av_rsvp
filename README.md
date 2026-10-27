@@ -69,11 +69,11 @@ Waiting-list promotion is FIFO **per person per function**. A family can be part
 |---|---|
 | System Manager / RSVP Administrator | All events and app settings |
 | Event Manager | Own events and events assigned at manager level; guest directory and event setup |
-| Event Coordinator | Assigned-event invitations, response entry, communications and reports |
+| Event Coordinator | Assigned-event invitation viewing, response entry, communications and reports |
 | Check-in Operator | Assigned-event function/attendee lookup and check-in; no dietary/accessibility fields |
 | Public guest | Only a validated private invitation through purpose-built endpoints |
 
-The guest directory is a shared resource for event managers. Event team rows must be paired with matching user roles. Coordinators should use response-entry and communication actions; managers maintain the guest directory.
+The guest directory is a shared resource for event managers. Event team rows must be paired with matching user roles. Coordinators should use response-entry and communication actions; managers maintain the guest directory and create/edit invitation details.
 
 ## Email behaviour
 

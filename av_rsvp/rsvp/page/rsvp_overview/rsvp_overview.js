@@ -20,7 +20,7 @@ frappe.pages["rsvp-overview"].on_page_load = function (wrapper) {
     body.find("#previous").on("click",()=>{offset--;load();});body.find("#next").on("click",()=>{offset++;load();});
     body.find("[data-action]").on("click",async function(){const name=this.dataset.name;if(this.dataset.action==="respond")window.open(`/rsvp?invitation=${encodeURIComponent(name)}`,"_blank","noopener");else {const link=await api("share_invitation",{invitation:name});frappe.msgprint({title:__("Share invitation"),message:`<p><a href="${esc(link.url)}" target="_blank" rel="noopener">Open private invitation</a></p><p><a href="${esc(link.whatsapp_url)}" target="_blank" rel="noopener">Share using WhatsApp</a></p><input class="form-control" readonly value="${esc(link.url)}" onclick="this.select()">`});}});
   }
-  page.set_primary_action(__("Add invitation"),()=>{if(!event.get_value())return frappe.msgprint(__("Select an event first."));frappe.new_doc("RSVP Invitation",{event:event.get_value()});});
+  if(frappe.model.can_create("RSVP Invitation"))page.set_primary_action(__("Add invitation"),()=>{if(!event.get_value())return frappe.msgprint(__("Select an event first."));frappe.new_doc("RSVP Invitation",{event:event.get_value()});});
   page.add_inner_button(__("Refresh"),load);
   page.add_inner_button(__("Check-in"),()=>{frappe.route_options={event:event.get_value()};frappe.set_route("rsvp-checkin");});
   page.add_menu_item(__("Import guests"),()=>frappe.new_doc("Data Import",{reference_doctype:"RSVP Guest",import_type:"Insert New Records"}));

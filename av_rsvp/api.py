@@ -111,8 +111,6 @@ def revoke_invitation(invitation):
 
 @frappe.whitelist(methods=["POST"])
 def renew_invitation(invitation):
-    from av_rsvp.security import current_doc, digest
-
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event, 3)
     lock_event(doc.event)
