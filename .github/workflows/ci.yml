@@ -25,6 +25,21 @@ jobs:
       - run: python -m compileall -q av_rsvp
       - run: find av_rsvp -name '*.js' -print0 | xargs -0 -n1 node --check
       - run: pip wheel --no-deps . -w /tmp/wheels
+  portal-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-save playwright
+      - run: npx playwright install chromium --with-deps
+      - run: node tests/portal.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: portal-screenshots
+          path: /tmp/rsvp-portal-*.png
   frappe-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -57,7 +72,7 @@ jobs:
           bench new-site test_site --db-host 127.0.0.1 --db-root-password root --admin-password admin --mariadb-user-host-login-scope='%'
           bench --site test_site install-app av_rsvp
           bench --site test_site migrate
-          bench --site test_site set-config allow_tests true --parse
+          bench --site test_site set-config allow_tests 1 --parse
       - name: Run integration tests
         working-directory: /tmp/rsvp-bench
         run: bench --site test_site run-tests --app av_rsvp

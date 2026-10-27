@@ -5,7 +5,16 @@ from frappe.model.document import Document
 from frappe.utils import add_days, cint, get_datetime
 
 from av_rsvp.permissions import require_event
-from av_rsvp.security import digest, lock_event, new_nonce, require_service, service_write, token_for
+from av_rsvp.security import (
+    current_count,
+    current_doc,
+    digest,
+    lock_event,
+    new_nonce,
+    require_service,
+    service_write,
+    token_for,
+)
 
 
 class RSVPEventTeamBase(Document):
@@ -39,7 +48,7 @@ class RSVPEventBase(Document):
             if old and old.timezone != self.timezone:
                 frappe.throw("The timezone cannot be changed after creation. Create a new event if needed.")
             if old and old.multiple_functions and not self.multiple_functions:
-                if frappe.db.count("RSVP Function", {"event": self.name}) > 1:
+                if current_count("RSVP Function", {"event": self.name}) > 1:
                     frappe.throw("Multiple functions cannot be disabled while several functions exist.")
             if old and not old.multiple_functions:
                 default = frappe.db.get_value("RSVP Function", {"event": self.name}, "name")
@@ -78,7 +87,7 @@ class RSVPFunctionBase(Document):
     def validate(self):
         require_event(self.event, 3) if not frappe.flags.av_rsvp_service else None
         lock_event(self.event)
-        event = frappe.get_doc("RSVP Event", self.event)
+        event = current_doc("RSVP Event", self.event)
         if not self.is_new() and self.has_value_changed("event"):
             frappe.throw("A function cannot be moved to another event.")
         if (
@@ -96,7 +105,7 @@ class RSVPFunctionBase(Document):
         if cint(self.capacity) < 0:
             frappe.throw("Capacity cannot be negative.")
         confirmed = (
-            frappe.db.count("RSVP Function Response", {"function": self.name, "allocation": "Confirmed"})
+            current_count("RSVP Function Response", {"function": self.name, "allocation": "Confirmed"})
             if not self.is_new()
             else 0
         )
@@ -134,7 +143,7 @@ class RSVPInvitationBase(Document):
             self.invite_key = digest(f"{self.event}:{self.guest}")
             self.access_nonce = new_nonce()
             self.token_hash = digest(token_for(self.access_nonce, "invitation"))
-            event = frappe.get_doc("RSVP Event", self.event)
+            event = current_doc("RSVP Event", self.event)
             self.token_expires_on = add_days(get_datetime(event.ends_on), 7)
             self.response_status = "Pending"
             self.delivery_status = "Not Sent"
@@ -158,7 +167,7 @@ class RSVPInvitationBase(Document):
             ]
             if old and any(self.get(key) != old.get(key) for key in protected):
                 frappe.throw("Use RSVP actions to change responses or invitation access.")
-            count = frappe.db.count("RSVP Attendee", {"invitation": self.name, "active": 1})
+            count = current_count("RSVP Attendee", {"invitation": self.name, "active": 1})
             if cint(self.max_attendees) < count:
                 frappe.throw("The allowance cannot be lower than the active attendee count.")
 

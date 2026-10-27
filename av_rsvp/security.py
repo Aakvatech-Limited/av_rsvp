@@ -36,10 +36,13 @@ def check_token(token):
     name = frappe.db.get_value("RSVP Invitation", {"token_hash": digest(token)})
     if not name:
         invalid_token()
-    invitation = frappe.get_doc("RSVP Invitation", name)
-    event = frappe.get_doc("RSVP Event", invitation.event)
+    event_name = frappe.db.get_value("RSVP Invitation", name, "event")
+    lock_event(event_name)
+    invitation = current_doc("RSVP Invitation", name)
+    event = current_doc("RSVP Event", invitation.event)
     if (
         invitation.revoked
+        or invitation.token_hash != digest(token)
         or not invitation.token_expires_on
         or get_datetime(invitation.token_expires_on) < event_now(event.timezone)
     ):
@@ -74,3 +77,33 @@ def service_write():
 def require_service():
     if not frappe.flags.av_rsvp_service:
         frappe.throw("Use the RSVP actions to update this record.", frappe.PermissionError)
+
+
+def current_rows(doctype, filters=None, fields=None, order_by=None, pluck=None):
+    """Locking reads see committed rows after waiting, including under REPEATABLE READ.
+
+    The caller must hold the event lock; do not use a snapshot count for allocation.
+    """
+    rows = frappe.qb.get_query(
+        table=doctype,
+        filters=filters,
+        fields=fields or [pluck or "name"],
+        order_by=order_by,
+        for_update=True,
+        ignore_permissions=True,
+    ).run(as_dict=True)
+    return [row[pluck] for row in rows] if pluck else rows
+
+
+def current_count(doctype, filters):
+    return len(current_rows(doctype, filters=filters))
+
+
+def current_value(doctype, filters, fieldname="name"):
+    return frappe.db.get_value(doctype, filters, fieldname, for_update=True)
+
+
+def current_doc(*args):
+    if len(args) == 1 and isinstance(args[0], dict):
+        return frappe.get_doc(args[0])
+    return frappe.get_doc(*args, for_update=True)

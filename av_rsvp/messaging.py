@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import add_days, get_datetime, now_datetime
 
 from av_rsvp.domain import event_now
-from av_rsvp.security import digest, invitation_url, lock_event, service_write
+from av_rsvp.security import current_doc, digest, invitation_url, lock_event, service_write
 
 
 def queue_message(invitation, purpose, dedup_key):
@@ -29,11 +29,11 @@ def queue_message(invitation, purpose, dedup_key):
 def deliver_message(log_name):
     log = frappe.get_doc("RSVP Message Log", log_name)
     lock_event(log.event)
-    log.reload()
+    log = current_doc("RSVP Message Log", log_name)
     if log.get("email_queue") or log.status == "Sent":
         return
-    invitation = frappe.get_doc("RSVP Invitation", log.invitation)
-    event = frappe.get_doc("RSVP Event", log.event)
+    invitation = current_doc("RSVP Invitation", log.invitation)
+    event = current_doc("RSVP Event", log.event)
     if invitation.revoked or event.status in {"Draft", "Cancelled", "Completed"}:
         with service_write():
             log.status, log.error = "Failed", "Invitation or event is no longer active."

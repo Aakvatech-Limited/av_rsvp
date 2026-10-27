@@ -14,6 +14,7 @@ from av_rsvp.services import apply_response, check_in
 
 class TestRSVP(IntegrationTestCase):
     def setUp(self):
+        super().setUp()
         frappe.set_user("Administrator")
         self.event = frappe.get_doc(
             dict(
@@ -38,6 +39,7 @@ class TestRSVP(IntegrationTestCase):
 
     def tearDown(self):
         frappe.set_user("Administrator")
+        super().tearDown()
 
     def invite(self, name):
         guest = frappe.get_doc(dict(doctype="RSVP Guest", guest_name=name)).insert()
@@ -164,3 +166,57 @@ class TestRSVP(IntegrationTestCase):
             ("Report", "RSVP Catering Requirements"),
         ]:
             self.assertTrue(frappe.db.exists(dt, name), f"Missing {dt}: {name}")
+
+    def test_replaced_link_and_entry_pass_are_separate(self):
+        old = token_for(self.invitation.access_nonce, "invitation")
+        api.renew_invitation(self.invitation.name)
+        with self.assertRaises(frappe.PermissionError):
+            check_token(old)
+        self.invitation.reload()
+        result = apply_response(self.invitation.name, "Attending", self.people())
+        with self.assertRaises(frappe.PermissionError):
+            check_token(result["attendees"][0].entry_token)
+
+    def test_coordinator_role_cannot_read_sensitive_data_in_checkin_assignment(self):
+        email = f"rsvp-{frappe.generate_hash(length=10)}@example.com"
+        user = frappe.get_doc(
+            dict(
+                doctype="User",
+                email=email,
+                first_name="RSVP Operator",
+                send_welcome_email=0,
+                roles=[dict(role="Event Coordinator"), dict(role="Check-in Operator")],
+            )
+        ).insert()
+        self.event.append("team", dict(user=user.name, access_level="Check-in Operator"))
+        self.event.save()
+        result = apply_response(self.invitation.name, "Attending", self.people())
+        person = frappe.get_doc("RSVP Attendee", result["attendees"][0].name)
+        frappe.set_user(user.name)
+        self.assertEqual(access_level(self.event.name), 1)
+        self.assertFalse(document_access(person, ptype="read"))
+        with self.assertRaises(frappe.PermissionError):
+            api.event_overview(self.event.name)
+        # Explicit check-in lookup is deliberately limited to name/category.
+        rows = api.find_attendees(self.function.name)
+        self.assertEqual(set(rows[0]), {"name", "attendee_name", "age_group"})
+        with self.assertRaises(frappe.PermissionError):
+            api.staff_invitation(self.invitation.name)
+
+    def test_foreign_function_is_rejected(self):
+        other_event = frappe.get_doc(
+            dict(
+                doctype="RSVP Event",
+                event_title="Other",
+                starts_on=now_datetime() + timedelta(days=30),
+                ends_on=now_datetime() + timedelta(days=31),
+                rsvp_deadline=now_datetime() + timedelta(days=29),
+                timezone="Africa/Dar_es_Salaam",
+                venue="Other venue",
+            )
+        ).insert()
+        other_function = frappe.db.get_value("RSVP Function", {"event": other_event.name})
+        people = self.people()
+        people[0]["functions"][0]["function"] = other_function
+        with self.assertRaises(frappe.ValidationError):
+            apply_response(self.invitation.name, "Attending", people)

@@ -4,7 +4,16 @@ import frappe
 from frappe.utils import cint, get_datetime, now_datetime
 
 from av_rsvp.domain import allocation_for, clean_text, event_now, validate_people
-from av_rsvp.security import digest, lock_event, service_write, token_for
+from av_rsvp.security import (
+    current_count,
+    current_doc,
+    current_rows,
+    current_value,
+    digest,
+    lock_event,
+    service_write,
+    token_for,
+)
 
 
 def save_doc(doc):
@@ -12,7 +21,7 @@ def save_doc(doc):
 
 
 def functions_for(event):
-    return frappe.get_all(
+    return current_rows(
         "RSVP Function",
         filters={"event": event, "enabled": 1},
         fields=["name", "function_title", "starts_on", "ends_on", "venue", "capacity", "meal_options"],
@@ -21,8 +30,13 @@ def functions_for(event):
 
 
 def snapshot(invitation, event):
+    lock_event(event.name)
+    invitation = current_doc("RSVP Invitation", invitation.name)
+    event = current_doc("RSVP Event", event.name)
+    if invitation.revoked or event.status in {"Draft", "Cancelled"}:
+        frappe.throw("This invitation is unavailable.", frappe.PermissionError)
     functions = functions_for(event.name)
-    people = frappe.get_all(
+    people = current_rows(
         "RSVP Attendee",
         filters={"invitation": invitation.name, "active": 1},
         fields=[
@@ -35,7 +49,7 @@ def snapshot(invitation, event):
         ],
         order_by="creation, name",
     )
-    responses = frappe.get_all(
+    responses = current_rows(
         "RSVP Function Response",
         filters={"invitation": invitation.name},
         fields=["attendee", "function", "attendance", "allocation", "meal_choice"],
@@ -96,11 +110,13 @@ def snapshot(invitation, event):
     )
 
 
-def apply_response(invitation_name, response, people, notes="", actor=None):
-    invitation = frappe.get_doc("RSVP Invitation", invitation_name)
-    lock_event(invitation.event)
-    invitation.reload()
-    event = frappe.get_doc("RSVP Event", invitation.event)
+def apply_response(invitation_name, response, people, notes="", actor=None, expected_token_hash=None):
+    event_name = frappe.db.get_value("RSVP Invitation", invitation_name, "event")
+    lock_event(event_name)
+    invitation = current_doc("RSVP Invitation", invitation_name)
+    event = current_doc("RSVP Event", invitation.event)
+    if expected_token_hash is not None and invitation.token_hash != expected_token_hash:
+        frappe.throw("This invitation link has been replaced.", frappe.PermissionError)
     if invitation.revoked or event.status != "Published":
         frappe.throw("RSVP responses are closed for this event.")
     if event_now(event.timezone) > get_datetime(event.rsvp_deadline):
@@ -125,14 +141,14 @@ def apply_response(invitation_name, response, people, notes="", actor=None):
         frappe.throw("Attending people require an Attending invitation response.")
     existing = {
         p.name: p
-        for p in frappe.get_all(
+        for p in current_rows(
             "RSVP Attendee", filters={"invitation": invitation.name}, fields=["name", "active"]
         )
     }
     if any(p.get("name") and p["name"] not in existing for p in people):
         frappe.throw("An attendee does not belong to this invitation.", frappe.PermissionError)
     keep = {p.get("name") for p in people if p.get("name")}
-    checked = frappe.get_all(
+    checked = current_rows(
         "RSVP Check-in",
         filters={"event": event.name, "status": "Checked In", "attendee": ["in", list(existing) or [""]]},
         fields=["attendee", "function"],
@@ -151,18 +167,16 @@ def apply_response(invitation_name, response, people, notes="", actor=None):
         for name in existing:
             if name not in keep:
                 frappe.db.set_value("RSVP Attendee", name, "active", 0)
-                for row in frappe.get_all("RSVP Function Response", filters={"attendee": name}, pluck="name"):
-                    doc = frappe.get_doc("RSVP Function Response", row)
+                for row in current_rows("RSVP Function Response", filters={"attendee": name}, pluck="name"):
+                    doc = current_doc("RSVP Function Response", row)
                     doc.attendance = "Declined"
                     doc.allocation = "Cancelled"
                     doc.save(ignore_permissions=True)
         for person in people:
             if not person.get("name"):
-                doc = frappe.get_doc(
-                    dict(doctype="RSVP Attendee", event=event.name, invitation=invitation.name)
-                )
+                doc = current_doc(dict(doctype="RSVP Attendee", event=event.name, invitation=invitation.name))
             else:
-                doc = frappe.get_doc("RSVP Attendee", person["name"])
+                doc = current_doc("RSVP Attendee", person["name"])
             for key in ["attendee_name", "age_group", "dietary_requirements", "accessibility_requests"]:
                 doc.set(key, person.get(key, "Adult" if key == "age_group" else "").strip())
             doc.active = 1
@@ -171,11 +185,11 @@ def apply_response(invitation_name, response, people, notes="", actor=None):
         # First cancel non-attendance so a single edit can move places between people.
         for person in people:
             for answer in person["functions"]:
-                name = frappe.db.get_value(
+                name = current_value(
                     "RSVP Function Response", {"attendee": person["name"], "function": answer["function"]}
                 )
                 if name and answer["attendance"] != "Attending":
-                    row = frappe.get_doc("RSVP Function Response", name)
+                    row = current_doc("RSVP Function Response", name)
                     row.attendance = answer["attendance"]
                     row.allocation = "Cancelled" if answer["attendance"] == "Declined" else "Unallocated"
                     row.meal_choice = ""
@@ -185,13 +199,13 @@ def apply_response(invitation_name, response, people, notes="", actor=None):
         for person in people:
             for answer in person["functions"]:
                 function = functions[answer["function"]]
-                name = frappe.db.get_value(
+                name = current_value(
                     "RSVP Function Response", {"attendee": person["name"], "function": function.name}
                 )
                 row = (
-                    frappe.get_doc("RSVP Function Response", name)
+                    current_doc("RSVP Function Response", name)
                     if name
-                    else frappe.get_doc(
+                    else current_doc(
                         dict(
                             doctype="RSVP Function Response",
                             event=event.name,
@@ -201,7 +215,7 @@ def apply_response(invitation_name, response, people, notes="", actor=None):
                         )
                     )
                 )
-                used = frappe.db.count(
+                used = current_count(
                     "RSVP Function Response", {"function": function.name, "allocation": "Confirmed"}
                 )
                 try:
@@ -241,10 +255,8 @@ def promote_waitlist(event):
         return 0
     promoted = 0
     for function in functions_for(event.name):
-        used = frappe.db.count(
-            "RSVP Function Response", {"function": function.name, "allocation": "Confirmed"}
-        )
-        rows = frappe.get_all(
+        used = current_count("RSVP Function Response", {"function": function.name, "allocation": "Confirmed"})
+        rows = current_rows(
             "RSVP Function Response",
             filters={"function": function.name, "allocation": "Waitlisted", "attendance": "Attending"},
             fields=["name", "invitation", "attendee"],
@@ -253,16 +265,16 @@ def promote_waitlist(event):
         for row in rows:
             if function.capacity and used >= function.capacity:
                 break
-            if frappe.db.get_value("RSVP Invitation", row.invitation, "revoked") or not frappe.db.get_value(
+            if current_value("RSVP Invitation", row.invitation, "revoked") or not current_value(
                 "RSVP Attendee", row.attendee, "active"
             ):
                 continue
-            doc = frappe.get_doc("RSVP Function Response", row.name)
+            doc = current_doc("RSVP Function Response", row.name)
             doc.allocation = "Confirmed"
             doc.save(ignore_permissions=True)
             used += 1
             promoted += 1
-            invitation = frappe.get_doc("RSVP Invitation", row.invitation)
+            invitation = current_doc("RSVP Invitation", row.invitation)
             if invitation.email:
                 from av_rsvp.messaging import queue_message
 
@@ -273,39 +285,39 @@ def promote_waitlist(event):
 def check_in(function_name, attendee_name=None, entry_token=None):
     from av_rsvp.permissions import require_event
 
-    function = frappe.get_doc("RSVP Function", function_name)
-    require_event(function.event, 1)
-    lock_event(function.event)
-    function.reload()
-    event = frappe.get_doc("RSVP Event", function.event)
+    event_name = frappe.db.get_value("RSVP Function", function_name, "event")
+    require_event(event_name, 1)
+    lock_event(event_name)
+    function = current_doc("RSVP Function", function_name)
+    event = current_doc("RSVP Event", function.event)
     if event.status not in {"Published", "Registration Closed"} or not function.enabled:
         frappe.throw("Check-in is not available for this event or function.")
     if entry_token:
         if not isinstance(entry_token, str) or len(entry_token) != 64:
             frappe.throw("Invalid entry pass.")
-        attendee_name = frappe.db.get_value(
+        attendee_name = current_value(
             "RSVP Attendee", {"entry_hash": digest(entry_token), "event": event.name, "active": 1}
         )
     if not attendee_name:
         frappe.throw("Attendee not found.")
-    attendee = frappe.get_doc("RSVP Attendee", attendee_name)
+    attendee = current_doc("RSVP Attendee", attendee_name)
     if attendee.event != event.name or not attendee.active:
         frappe.throw("This attendee is not active for this event.")
-    if frappe.db.get_value("RSVP Invitation", attendee.invitation, "revoked"):
+    if current_value("RSVP Invitation", attendee.invitation, "revoked"):
         frappe.throw("This invitation has been revoked.")
-    response = frappe.db.get_value(
+    response = current_value(
         "RSVP Function Response",
         {"attendee": attendee.name, "function": function.name, "allocation": "Confirmed"},
         "name",
     )
     if not response:
         frappe.throw("This attendee has no confirmed place for this function.")
-    name = frappe.db.get_value("RSVP Check-in", {"response": response}, "name")
+    name = current_value("RSVP Check-in", {"response": response}, "name")
     with service_write():
         doc = (
-            frappe.get_doc("RSVP Check-in", name)
+            current_doc("RSVP Check-in", name)
             if name
-            else frappe.get_doc(
+            else current_doc(
                 dict(
                     doctype="RSVP Check-in",
                     event=event.name,

@@ -44,12 +44,7 @@ def document_access(doc, user=None, ptype=None):
     if doc.doctype == "RSVP Event" and doc.is_new():
         return "Event Manager" in frappe.get_roles(user)
     event = doc.name if doc.doctype == "RSVP Event" else doc.get("event")
-    minimum = (
-        1
-        if doc.doctype
-        in {"RSVP Attendee", "RSVP Function", "RSVP Check-in", "RSVP Function Response", "RSVP Event"}
-        else 2
-    )
+    minimum = 1 if doc.doctype in {"RSVP Function", "RSVP Check-in", "RSVP Event"} else 2
     if ptype in {"write", "create", "delete"}:
         minimum = 3 if doc.doctype in {"RSVP Event", "RSVP Function"} else 2
     return access_level(event, user) >= minimum
@@ -86,11 +81,11 @@ def invitation_query(user=None):
 
 
 def attendee_query(user=None):
-    return query_for("RSVP Attendee", user)
+    return query_for("RSVP Attendee", user, 2)
 
 
 def response_query(user=None):
-    return query_for("RSVP Function Response", user)
+    return query_for("RSVP Function Response", user, 2)
 
 
 def checkin_query(user=None):

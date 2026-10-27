@@ -7,7 +7,17 @@ from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime
 
 from av_rsvp.permissions import access_level, require_event
-from av_rsvp.security import check_token, invitation_url, lock_event, new_nonce, service_write, token_for
+from av_rsvp.security import (
+    check_token,
+    current_doc,
+    current_rows,
+    digest,
+    invitation_url,
+    lock_event,
+    new_nonce,
+    service_write,
+    token_for,
+)
 from av_rsvp.services import apply_response, check_in, functions_for, promote_waitlist, snapshot
 
 
@@ -32,7 +42,12 @@ def respond(token, response, people, notes=""):
     private_response()
     invitation, _event = check_token(token)
     return apply_response(
-        invitation.name, response, frappe.parse_json(people), notes, actor="Guest via private invitation"
+        invitation.name,
+        response,
+        frappe.parse_json(people),
+        notes,
+        actor="Guest via private invitation",
+        expected_token_hash=digest(token),
     )
 
 
@@ -83,10 +98,10 @@ def revoke_invitation(invitation):
     ):
         frappe.throw("Reverse attendee check-ins before revoking this invitation.")
     with service_write():
-        doc.reload()
+        doc = current_doc("RSVP Invitation", invitation)
         doc.revoked = 1
         doc.save(ignore_permissions=True)
-        for name in frappe.get_all("RSVP Function Response", filters={"invitation": doc.name}, pluck="name"):
+        for name in current_rows("RSVP Function Response", filters={"invitation": doc.name}, pluck="name"):
             row = frappe.get_doc("RSVP Function Response", name)
             row.attendance, row.allocation = "Declined", "Cancelled"
             row.save(ignore_permissions=True)
@@ -96,13 +111,13 @@ def revoke_invitation(invitation):
 
 @frappe.whitelist(methods=["POST"])
 def renew_invitation(invitation):
-    from av_rsvp.security import digest
+    from av_rsvp.security import current_doc, digest
 
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event, 3)
     lock_event(doc.event)
     with service_write():
-        doc.reload()
+        doc = current_doc("RSVP Invitation", invitation)
         doc.access_nonce = new_nonce()
         doc.token_hash = digest(token_for(doc.access_nonce, "invitation"))
         doc.revoked = 0
@@ -158,7 +173,7 @@ def reverse_checkin(checkin, reason):
     if not reason:
         frappe.throw("A reversal reason is required.")
     with service_write():
-        doc.reload()
+        doc = current_doc("RSVP Check-in", checkin)
         if doc.status == "Checked In":
             doc.status = "Reversed"
             doc.reversed_on = now_datetime()
