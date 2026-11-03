@@ -30,6 +30,7 @@
   "dietary_options",
   "allow_additional_guests",
   "additional_questions",
+  "form_sections",
   "contact_email",
   "contact_phone",
   "team",
@@ -210,6 +211,13 @@
    "fieldtype": "Check",
    "default": "0",
    "description": "Use the main contact as the first attendee without asking for Guest 1 details. Turn off Allow Additional Guests as well to hide all guest-entry cards."
+  },
+  {
+   "fieldname": "form_sections",
+   "label": "Form Section Order",
+   "fieldtype": "Table",
+   "options": "RSVP Form Section",
+   "description": "Drag rows to reorder the public RSVP form. For attendance before contact details, place Response before Contact Details. Submit stays at the bottom."
   }
  ],
  "permissions": [

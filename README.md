@@ -71,6 +71,8 @@ Private events remain private by default. Disabling public registration stops ne
 
 Open **RSVP Event → Guest Form**:
 
+- **Form Section Order** lets you drag Contact Details, Response, Guest Details, Additional Questions and Message to Organiser into any order. Place **Response** before **Contact Details** to ask attendance first. You can also click **Guest Form → Attendance Before Contact Details**, then save. Omitted sections are appended automatically; Submit stays at the bottom. This controls section order, while Additional Questions row order controls the questions inside that section.
+
 - **Hide First Guest Details** removes the Guest 1 details card and uses the main contact as the primary attendee. Turn **Allow Additional Guests** off as well to remove all guest-entry cards. A simple event then needs only contact details and the overall RSVP; function/meal choices remain visible when needed. Attendance, capacity and QR passes still work.
 - **Show Dietary Preferences** shows or hides the optional preference for each attendee. Enter one choice per line in **Dietary Preference Options** for a dropdown, or leave the options empty for free text. This is separate from function meal choices.
 - **Allow Additional Guests** shows or hides Add Guest. Turning it off limits new public registrations and new private RSVPs to the primary attendee. Previously booked groups can still update or cancel their existing attendees; new extra attendees are rejected on the server.

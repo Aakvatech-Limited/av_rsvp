@@ -1,5 +1,14 @@
 frappe.ui.form.on("RSVP Event", {
   refresh(frm) {
+    if (frm.perm?.some(permission=>permission.write)) {
+      frm.add_custom_button(__("Attendance Before Contact Details"),()=>{
+        frm.clear_table("form_sections");
+        ["Response", "Contact Details", "Guest Details", "Additional Questions", "Message to Organiser"].forEach(section=>frm.add_child("form_sections", {section}));
+        frm.refresh_field("form_sections");
+        frm.dirty();
+        frappe.show_alert({message:__("Section order updated. Save the event to apply it."),indicator:"green"});
+      }, __("Guest Form"));
+    }
     if(frm.is_new())return;
     frm.add_custom_button(__("Event Overview"),()=>{frappe.route_options={event:frm.doc.name};frappe.set_route("rsvp-overview");});
     frm.add_custom_button(__("Check-in"),()=>{frappe.route_options={event:frm.doc.name};frappe.set_route("rsvp-checkin");});

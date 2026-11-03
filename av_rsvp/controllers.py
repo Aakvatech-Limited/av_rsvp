@@ -5,7 +5,7 @@ from frappe.model.document import Document
 from frappe.utils import add_days, cint, get_datetime
 
 from av_rsvp.permissions import require_event
-from av_rsvp.questions import choices, validate_questions
+from av_rsvp.questions import choices, section_order, validate_questions
 from av_rsvp.security import (
     current_count,
     current_doc,
@@ -48,6 +48,9 @@ class RSVPEventBase(Document):
         try:
             validate_questions(self.additional_questions)
             choices(self.dietary_options)
+            ordered_sections = section_order(self.form_sections)
+            for section in ordered_sections[len(self.form_sections) :]:
+                self.append("form_sections", {"section": section})
         except ValueError as error:
             frappe.throw(str(error))
         if self.allow_public_registration and not 1 <= cint(self.public_max_attendees) <= 100:

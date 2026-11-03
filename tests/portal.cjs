@@ -36,6 +36,12 @@ const fixture = {
       const description=page.locator('.rsvp-multiline').first();
       assert.equal(await description.evaluate(el=>getComputedStyle(el).whiteSpace),'pre-line');
       assert.equal((await description.innerText()).replace(/\r\n/g,'\n'),fixture.event.description.replace(/\r\n/g,'\n'));
+      await page.evaluate(()=>{window.testState.event.form_sections=['Response','Additional Questions','Contact Details','Guest Details','Message to Organiser'];});
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      const sectionOrder=await page.locator('[data-form-section]').evaluateAll(nodes=>nodes.map(n=>n.dataset.formSection));
+      assert.deepEqual(sectionOrder,['Response','Additional Questions','Contact Details','Guest Details','Message to Organiser']);
+      assert.ok(await page.locator('#overall').evaluate(input=>Boolean(input.compareDocumentPosition(document.querySelector('#save-response')) & Node.DOCUMENT_POSITION_FOLLOWING)));
+      if(publicMode) assert.ok(await page.locator('#overall').evaluate(input=>Boolean(input.compareDocumentPosition(document.querySelector('#contact-guest_name')) & Node.DOCUMENT_POSITION_FOLLOWING)));
       assert.equal(await page.locator('[data-person]').count(),1);
       await page.getByRole('button',{name:'+ Add guest'}).click();
       assert.equal(await page.locator('[data-person]').count(),2);

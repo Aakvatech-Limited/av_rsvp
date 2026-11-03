@@ -1,6 +1,6 @@
 import unittest
 
-from av_rsvp.questions import choices, validate_answers, validate_questions
+from av_rsvp.questions import FORM_SECTIONS, choices, section_order, validate_answers, validate_questions
 
 
 class OptionalQuestions(unittest.TestCase):
@@ -50,3 +50,16 @@ class OptionalQuestions(unittest.TestCase):
                 validate_questions(questions)
         with self.assertRaises(ValueError):
             choices("Bus\nBus")
+
+
+class FormSectionOrder(unittest.TestCase):
+    def test_default_and_partial_order_preserve_all_sections(self):
+        self.assertEqual(section_order([]), FORM_SECTIONS)
+        ordered = section_order([{"section": "Response"}, {"section": "Contact Details"}])
+        self.assertEqual(ordered[:2], ["Response", "Contact Details"])
+        self.assertEqual(set(ordered), set(FORM_SECTIONS))
+
+    def test_unknown_and_duplicate_sections_are_rejected(self):
+        for rows in [[{"section": "Unknown"}], [{"section": "Response"}] * 2]:
+            with self.assertRaises(ValueError):
+                section_order(rows)

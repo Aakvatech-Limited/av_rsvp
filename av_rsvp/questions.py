@@ -49,3 +49,22 @@ def validate_answers(questions, answers):
             raise ValueError("Invalid checkbox answer.")
         cleaned[key] = value
     return cleaned
+
+
+FORM_SECTIONS = [
+    "Contact Details",
+    "Response",
+    "Guest Details",
+    "Additional Questions",
+    "Message to Organiser",
+]
+
+
+def section_order(rows):
+    """Accept partial layouts, appending omitted sections to keep inputs available."""
+    if len(rows) > len(FORM_SECTIONS):
+        raise ValueError("Enter each form section only once.")
+    ordered = [row.get("section") for row in rows]
+    if len(ordered) != len(set(ordered)) or any(section not in FORM_SECTIONS for section in ordered):
+        raise ValueError("Choose each supported form section only once.")
+    return ordered + [section for section in FORM_SECTIONS if section not in ordered]
