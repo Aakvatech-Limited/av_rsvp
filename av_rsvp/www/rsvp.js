@@ -115,7 +115,7 @@ frappe.ready(async () => {
     state = registering ? await api("get_registration", {event:publicEvent}) : await api(staffInvitation ? "staff_invitation" : "get_invitation", staffInvitation ? {invitation: staffInvitation} : {token});
     additionalAnswers = {...(state.additional_answers || {})};
     people = structuredClone(state.attendees);
-    if (!people.length && state.invitation.response_status === "Pending") people.push({attendee_name: state.invitation.guest_name, age_group:"Adult", dietary_requirements:"", accessibility_requests:"", functions:state.functions.map(f => ({function:f.name, attendance:"Attending", meal_choice:""}))});
+    if (!people.length && (state.invitation.response_status === "Pending" || hideFirst())) people.push({attendee_name: state.invitation.guest_name, age_group:"Adult", dietary_requirements:"", accessibility_requests:"", functions:state.functions.map(f => ({function:f.name, attendance:"Attending", meal_choice:""}))});
     render();
   } catch (_) {root.innerHTML = '<div class="rsvp-card"><h1>Invitation unavailable</h1><p>This invitation or public registration may be unavailable or closed. Contact the event organiser for help.</p></div>';}
 });
