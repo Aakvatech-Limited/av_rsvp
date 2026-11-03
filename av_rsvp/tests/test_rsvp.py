@@ -384,6 +384,7 @@ class TestRSVP(IntegrationTestCase):
             apply_response(self.invitation.name, "Attending", self.people() + self.people("Extra"))
 
     def test_hidden_first_guest_still_supports_function_meal_choices(self):
+        self.function.reload()
         self.function.meal_options = "Vegetarian\nStandard"
         self.function.save()
         self.event.hide_first_guest_details = 1
@@ -393,6 +394,20 @@ class TestRSVP(IntegrationTestCase):
         result = apply_response(self.invitation.name, "Attending", people)
         self.assertEqual(result["attendees"][0].attendee_name, "Asha")
         self.assertEqual(result["attendees"][0].functions[0]["meal_choice"], "Vegetarian")
+
+    def test_event_form_section_order_is_saved_and_projected(self):
+        self.open_registration()
+        self.event.set("form_sections", [dict(section="Response"), dict(section="Contact Details")])
+        self.event.save()
+        self.assertEqual(len(self.event.form_sections), 5)
+        expected = [row.section for row in self.event.form_sections]
+        self.assertEqual(expected[:2], ["Response", "Contact Details"])
+        self.assertEqual(api.get_registration(self.event.name)["event"]["form_sections"], expected)
+        token = token_for(self.invitation.access_nonce, "invitation")
+        self.assertEqual(api.get_invitation(token)["event"]["form_sections"], expected)
+        self.event.append("form_sections", dict(section="Response"))
+        with self.assertRaises(frappe.ValidationError):
+            self.event.save()
 
     def open_registration(self):
         self.event.allow_public_registration = 1
@@ -612,6 +627,7 @@ class TestConcurrentCapacity(IntegrationTestCase):
             ]:
                 frappe.db.delete(dt, {"event": event.name})
             frappe.db.delete("RSVP Event Team", {"parent": event.name})
+            frappe.db.delete("RSVP Form Section", {"parent": event.name})
             frappe.db.delete("RSVP Event", {"name": event.name})
             frappe.db.delete("RSVP Guest", {"name": ["in", guests]})
             frappe.db.commit()
