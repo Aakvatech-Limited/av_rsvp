@@ -59,7 +59,7 @@ frappe.ready(async () => {
   }
   function render(saved = false) {
     const e = state.event;
-    root.innerHTML = `<section class="rsvp-card">${e.banner ? `<img class="rsvp-banner" src="${esc(e.banner)}" alt="">` : ""}<div class="rsvp-eyebrow">${esc(e.host_name || "You're invited")}</div><h1>${esc(e.event_title)}</h1>${registering ? "<p>Register for this event. No account is required.</p>" : `<p>Hello ${esc(state.invitation.guest_name)}, we would love to have you with us.</p>`}<p class="rsvp-multiline">${esc(e.description || "")}</p>
+    root.innerHTML = `<section class="rsvp-card">${e.banner ? `<img class="rsvp-banner" src="${esc(e.banner)}" alt="">` : ""}<div class="rsvp-eyebrow">${esc(e.host_name || "You're invited")}</div><h1>${esc(e.event_title)}</h1>${registering ? "<p>Register for this event. No account is required.</p>" : `<p>Hello ${esc(state.invitation.guest_name)}, we would love to have you with us.</p>`}<div class="rsvp-multiline">${e.description || ""}</div>
       <div class="rsvp-meta"><span>${esc(date(e.starts_on))}</span><span>${esc(e.venue)}</span><span>${esc(e.timezone)}</span></div>${e.map_url ? `<a href="${esc(e.map_url)}" target="_blank" rel="noopener noreferrer">Get directions ↗</a>` : ""}
       <p class="rsvp-muted">Please respond by ${esc(date(e.rsvp_deadline))}. ${registering ? "Each registration allows" : "Your invitation allows"} ${esc(state.invitation.max_attendees)} people, including you.</p>${staffInvitation ? '<div class="rsvp-notice">Organiser entry: this response will record your signed-in user.</div>' : ""}</section>
       ${saved ? '<div class="rsvp-notice" role="status">Your response has been saved. Check each function’s confirmation status below.</div>' : ""}

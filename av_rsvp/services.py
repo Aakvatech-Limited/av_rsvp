@@ -16,7 +16,6 @@ from av_rsvp.security import (
     service_write,
     token_for,
 )
-from av_rsvp.text import event_text
 
 
 def save_doc(doc):
@@ -128,7 +127,7 @@ def public_event_details(event):
             {key: row.get(key) for key in ["question_key", "question_label", "question_type", "options"]}
             for row in event.additional_questions
         ],
-        "description": event_text(event.description),
+        "description": frappe.utils.sanitize_html(event.description or ""),
         "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
         **{
             key: display_datetime(event.get(key), event.timezone)
