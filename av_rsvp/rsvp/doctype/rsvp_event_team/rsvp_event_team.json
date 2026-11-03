@@ -26,7 +26,7 @@
    "reqd": 1,
    "default": "Event Coordinator",
    "in_list_view": 1,
-   "options": "Event Manager\nEvent Coordinator\nCheck-in Operator"
+   "options": "Event Manager\nEvent Coordinator\nCheck-in Operator\nEvent Host"
   }
  ],
  "permissions": [],
