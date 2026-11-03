@@ -9,6 +9,22 @@ def is_admin(user=None):
     return user == "Administrator" or bool(ADMIN_ROLES.intersection(frappe.get_roles(user)))
 
 
+def host_app_access():
+    return "Event Host" in frappe.get_roles()
+
+
+def is_event_host(event, user=None):
+    user = user or frappe.session.user
+    return user != "Guest" and "Event Host" in frappe.get_roles(user) and bool(frappe.db.exists("RSVP Event Team", {
+        "parent": event, "parenttype": "RSVP Event", "user": user, "access_level": "Event Host"
+    }))
+
+
+def require_overview(event):
+    if access_level(event) < 2 and not is_event_host(event):
+        frappe.throw("You do not have access to this event overview.", frappe.PermissionError)
+
+
 def app_access():
     return bool(set(frappe.get_roles()).intersection(ADMIN_ROLES | set(LEVELS)))
 
