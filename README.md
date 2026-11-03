@@ -71,12 +71,24 @@ Private events remain private by default. Disabling public registration stops ne
 
 Open **RSVP Event → Guest Form**:
 
+- **Form Section Order** lets you drag Contact Details, Response, Guest Details, Additional Questions and Message to Organiser into any order. Place **Response** before **Contact Details** to ask attendance first. You can also click **Guest Form → Attendance Before Contact Details**, then save. Omitted sections are appended automatically; Submit stays at the bottom. This controls section order, while Additional Questions row order controls the questions inside that section.
+
 - **Hide First Guest Details** removes the Guest 1 details card and uses the main contact as the primary attendee. Turn **Allow Additional Guests** off as well to remove all guest-entry cards. A simple event then needs only contact details and the overall RSVP; function/meal choices remain visible when needed. Attendance, capacity and QR passes still work.
 - **Show Dietary Preferences** shows or hides the optional preference for each attendee. Enter one choice per line in **Dietary Preference Options** for a dropdown, or leave the options empty for free text. This is separate from function meal choices.
 - **Allow Additional Guests** shows or hides Add Guest. Turning it off limits new public registrations and new private RSVPs to the primary attendee. Previously booked groups can still update or cancel their existing attendees; new extra attendees are rejected on the server.
 - **Additional Questions** is an optional child table. Enter the question and choose Text, Long Text, Select or Check. Select questions need one choice per line. Drag rows to change question order. These questions are all optional and appear once per RSVP, after attendee details.
 
 Answers are saved under **RSVP Invitation → Additional Answers** and restored when the guest reopens their private link or staff record a response. Removed questions retain their historical answers in Desk but are no longer exposed on the guest form. Hiding dietary preferences similarly keeps existing stored values without returning them to guests. Dietary visibility and additional guests remain enabled by default to preserve existing event behaviour.
+
+## Editable Web Page per event
+
+On a saved Event, use **Guest Form → Create Event Web Page**. This creates a draft **standard Frappe Web Page** with its own HTML, CSS and JavaScript, linked under Event Website. Creation/editing uses normal Website Manager permissions in addition to event access.
+
+Edit the Web Page's **Main Section (HTML)**, **Style → CSS**, and **Script → Javascript** as you would any normal Frappe page. A working default is supplied. Keep `#rsvp-root` with its `data-event` attribute for the RSVP form. The `<template data-rsvp-event-information>` block is fully editable HTML: reorder/remove content, add links or images, use `hidden`, or apply your CSS. Dynamic values use `data-rsvp-text="event_title"`, `data-rsvp-text="venue"`, `data-rsvp-html="description"` (Frappe-sanitised rich text), `data-rsvp-src="banner"` and `data-rsvp-link="map_url"`. The default also provides date, greeting, deadline and guest-allowance bindings.
+
+Move **Event Information** anywhere in **Form Section Order**, including the middle or end. Turn **Show Event Information** off to hide the whole block. Existing layouts keep it at the top until explicitly reordered. Submit remains last.
+
+Publish the Web Page when ready. New registration links, QR codes and private invitation links use its route; old `/rsvp` links open the published event page while keeping invitation tokens in the URL fragment. Unpublishing restores the standard RSVP URL. Creating again or saving the Event never overwrites customised page content. Each generated page holds its own copy of the starter CSS/JavaScript, so later app changes do not overwrite that code; update customised copies deliberately when adopting later client-side features. Server-side access, capacity and booking rules still apply.
 
 ## Counts and capacity
 

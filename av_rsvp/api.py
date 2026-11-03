@@ -499,16 +499,16 @@ def register(
 def event_registration_qr(event):
     """A shareable event registration code, never a private guest or entry token."""
     import base64
-    from urllib.parse import urlencode
 
-    from frappe.utils import get_url
     from PIL import Image, ImageDraw
     from pyqrcode import create as create_qr
+
+    from av_rsvp.event_pages import registration_url
 
     require_event(event, 2)
     private_response()
     doc = public_registration_event(event)
-    url = get_url("/rsvp") + "?" + urlencode({"event": doc.name})
+    url = registration_url(doc)
     # Frappe already includes PyQRCode and Pillow; no optional QR dependency.
     matrix = create_qr(url, error="M").code
     scale, border = 12, 4
@@ -528,3 +528,20 @@ def event_registration_qr(event):
         image="data:image/png;base64," + base64.b64encode(output.getvalue()).decode(),
         filename=frappe.scrub(doc.name) + "_registration_qr.png",
     )
+
+
+@frappe.whitelist(methods=["POST"])
+@retry_transaction
+def create_event_web_page(event):
+    from av_rsvp.event_pages import create_page
+
+    return create_page(event)
+
+
+@frappe.whitelist(methods=["POST"])
+@retry_transaction
+def event_registration_link(event):
+    from av_rsvp.event_pages import registration_url
+
+    require_event(event, 2)
+    return {"url": registration_url(public_registration_event(event))}

@@ -1,0 +1,30 @@
+<!-- Edit this page's HTML, Style (CSS) and Script fields independently per event.
+Keep #rsvp-root and its data-event attribute to retain the working RSVP form.
+Edit/remove any element in the information template. Its position follows the Event's Form Section Order.
+Dynamic binding: data-rsvp-text, data-rsvp-html="description", data-rsvp-src="banner", data-rsvp-link="map_url".
+-->
+<main class="rsvp-shell">
+  <a class="rsvp-brand" href="#">AV RSVP</a>
+  <template data-rsvp-event-information>
+    <section class="rsvp-card event-information">
+      <img class="rsvp-banner" data-rsvp-src="banner" alt="Event banner">
+      <div class="rsvp-eyebrow" data-rsvp-text="host_name"></div>
+      <h1 data-rsvp-text="event_title"></h1>
+      <p data-rsvp-text="greeting"></p>
+      <div class="rsvp-multiline" data-rsvp-html="description"></div>
+      <div class="rsvp-meta">
+        <span data-rsvp-text="starts_on_display"></span>
+        <span data-rsvp-text="venue"></span>
+        <span data-rsvp-text="timezone"></span>
+      </div>
+      <a data-rsvp-link="map_url" target="_blank" rel="noopener noreferrer">Get directions ↗</a>
+      <p class="rsvp-muted" data-rsvp-text="deadline_text"></p>
+      <p class="rsvp-muted" data-rsvp-text="allowance_text"></p>
+      <p class="rsvp-muted"><span data-rsvp-text="contact_email"></span> <span data-rsvp-text="contact_phone"></span></p>
+    </section>
+  </template>
+  <div id="rsvp-root" data-event="__EVENT_ID__" aria-live="polite">
+    <div class="rsvp-card">Loading event…</div>
+  </div>
+  <footer>Thoughtfully planned. Simply confirmed.</footer>
+</main>

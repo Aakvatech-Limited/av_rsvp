@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import cint, get_datetime, now_datetime
 
 from av_rsvp.domain import allocation_for, clean_text, validate_people
-from av_rsvp.questions import choices, validate_answers
+from av_rsvp.questions import choices, section_order, validate_answers
 from av_rsvp.security import (
     current_count,
     current_doc,
@@ -102,6 +102,8 @@ def snapshot(invitation, event):
 
 
 def public_event_details(event):
+    from av_rsvp.event_pages import published_page_url
+
     """Safe event fields shared by private invitations and public registration."""
     return {
         k: event.get(k)
@@ -119,11 +121,14 @@ def public_event_details(event):
             "dietary_options",
             "allow_additional_guests",
             "hide_first_guest_details",
+            "show_event_information",
             "contact_email",
             "contact_phone",
             "privacy_notice",
         ]
     } | {
+        "event_page_url": published_page_url(event),
+        "form_sections": section_order(event.form_sections),
         "additional_questions": [
             {key: row.get(key) for key in ["question_key", "question_label", "question_type", "options"]}
             for row in event.additional_questions

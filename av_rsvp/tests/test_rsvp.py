@@ -384,6 +384,7 @@ class TestRSVP(IntegrationTestCase):
             apply_response(self.invitation.name, "Attending", self.people() + self.people("Extra"))
 
     def test_hidden_first_guest_still_supports_function_meal_choices(self):
+        self.function.reload()
         self.function.meal_options = "Vegetarian\nStandard"
         self.function.save()
         self.event.hide_first_guest_details = 1
@@ -393,6 +394,77 @@ class TestRSVP(IntegrationTestCase):
         result = apply_response(self.invitation.name, "Attending", people)
         self.assertEqual(result["attendees"][0].attendee_name, "Asha")
         self.assertEqual(result["attendees"][0].functions[0]["meal_choice"], "Vegetarian")
+
+    def test_event_form_section_order_is_saved_and_projected(self):
+        self.open_registration()
+        self.event.set("form_sections", [dict(section="Response"), dict(section="Contact Details")])
+        self.event.save()
+        self.assertEqual(len(self.event.form_sections), 6)
+        expected = [row.section for row in self.event.form_sections]
+        self.assertEqual(expected[:3], ["Event Information", "Response", "Contact Details"])
+        self.assertEqual(api.get_registration(self.event.name)["event"]["form_sections"], expected)
+        token = token_for(self.invitation.access_nonce, "invitation")
+        self.assertEqual(api.get_invitation(token)["event"]["form_sections"], expected)
+        self.event.append("form_sections", dict(section="Response"))
+        with self.assertRaises(frappe.ValidationError):
+            self.event.save()
+
+    def test_event_web_page_creation_preserves_custom_code_and_changes_links(self):
+        from av_rsvp.event_pages import registration_url
+        from av_rsvp.security import invitation_url
+
+        self.open_registration()
+        result = api.create_event_web_page(self.event.name)
+        self.event.reload()
+        page = frappe.get_doc("Web Page", result["name"])
+        self.assertEqual(self.event.event_web_page, page.name)
+        self.assertEqual(page.content_type, "HTML")
+        self.assertFalse(page.published)
+        self.assertIn('data-event="' + self.event.name + '"', page.main_section_html)
+        self.assertIn("data-rsvp-event-information", page.main_section_html)
+        self.assertIn("frappe.ready", page.javascript)
+        self.assertIn(".rsvp-shell", page.css)
+        original_js = page.javascript
+        page.main_section_html += "<p>Our custom footer</p>"
+        page.css += "\n.event-information {color: navy;}"
+        page.javascript += "\n/* event-specific script */"
+        page.published = 1
+        page.save()
+        api.create_event_web_page(self.event.name)
+        page.reload()
+        self.assertIn("Our custom footer", page.main_section_html)
+        self.assertEqual(page.javascript, original_js + "\n/* event-specific script */")
+        self.assertTrue(registration_url(self.event).endswith("/" + page.route))
+        self.assertTrue(api.event_registration_qr(self.event.name)["url"].endswith("/" + page.route))
+        self.assertIn("/" + page.route + "#", invitation_url(self.invitation))
+        self.assertTrue(
+            api.get_registration(self.event.name)["event"]["event_page_url"].endswith("/" + page.route)
+        )
+        page.published = 0
+        page.save()
+        self.assertIn("/rsvp?event=", registration_url(self.event))
+        self.assertIsNone(api.get_registration(self.event.name)["event"].get("event_page_url"))
+
+    def test_event_web_page_creation_requires_event_and_website_access(self):
+        frappe.set_user("Guest")
+        with self.assertRaises(frappe.PermissionError):
+            api.create_event_web_page(self.event.name)
+
+    def test_event_information_can_be_moved_or_hidden(self):
+        from av_rsvp.questions import FORM_SECTIONS
+
+        self.open_registration()
+        self.event.set(
+            "form_sections", [dict(section=name) for name in [*FORM_SECTIONS[1:], "Event Information"]]
+        )
+        self.event.show_event_information = 0
+        self.event.save()
+        result = api.get_registration(self.event.name)
+        self.assertEqual(result["event"]["form_sections"][-1], "Event Information")
+        self.assertEqual(result["event"]["show_event_information"], 0)
+        self.assertEqual(
+            frappe.db.get_value("RSVP Event", self.event.name, "event_title"), self.event.event_title
+        )
 
     def open_registration(self):
         self.event.allow_public_registration = 1
@@ -612,6 +684,7 @@ class TestConcurrentCapacity(IntegrationTestCase):
             ]:
                 frappe.db.delete(dt, {"event": event.name})
             frappe.db.delete("RSVP Event Team", {"parent": event.name})
+            frappe.db.delete("RSVP Form Section", {"parent": event.name})
             frappe.db.delete("RSVP Event", {"name": event.name})
             frappe.db.delete("RSVP Guest", {"name": ["in", guests]})
             frappe.db.commit()
