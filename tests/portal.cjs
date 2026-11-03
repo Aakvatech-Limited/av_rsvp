@@ -5,7 +5,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
 const fixture = {
-  event:{event_title:'Annual Reception',host_name:'Aakvatech',starts_on:'2027-01-10 18:00:00',ends_on:'2027-01-10 21:00:00',rsvp_deadline:'2027-01-05 18:00:00',timezone:'Africa/Dar_es_Salaam',venue:'Dar es Salaam',allow_maybe:1,privacy_notice:'Your details are used for this event.'},
+  event:{description:'Welcome to our event.\r\nPlease arrive at 6 pm.\r\n\r\nDinner follows.',event_title:'Annual Reception',host_name:'Aakvatech',starts_on:'2027-01-10 18:00:00',ends_on:'2027-01-10 21:00:00',rsvp_deadline:'2027-01-05 18:00:00',timezone:'Africa/Dar_es_Salaam',venue:'Dar es Salaam',allow_maybe:1,privacy_notice:'Your details are used for this event.'},
   invitation:{guest_name:'Asha',max_attendees:2,response_status:'Pending'},
   functions:[{name:'dinner',function_title:'Dinner',starts_on:'2027-01-10 18:00:00',venue:'Dar es Salaam',meal_options:'Vegetarian\nStandard'}],attendees:[],editable:true
 };
@@ -32,6 +32,9 @@ const fixture = {
       },{data:fixture,publicMode});
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       await page.getByRole('heading',{name:'Annual Reception'}).waitFor();
+      const description=page.locator('.rsvp-multiline').first();
+      assert.equal(await description.evaluate(el=>getComputedStyle(el).whiteSpace),'pre-line');
+      assert.equal((await description.innerText()).replace(/\r\n/g,'\n'),fixture.event.description.replace(/\r\n/g,'\n'));
       assert.equal(await page.locator('[data-person]').count(),1);
       await page.getByRole('button',{name:'+ Add guest'}).click();
       assert.equal(await page.locator('[data-person]').count(),2);
