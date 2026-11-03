@@ -8,11 +8,18 @@
  "type": "Workspace",
  "public": 1,
  "icon": "calendar",
- "content": "[{\"id\": \"welcome\", \"type\": \"header\", \"data\": {\"text\": \"<b>AV RSVP</b>\", \"col\": 12}}, {\"id\": \"quick0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Event Overview\", \"col\": 4}}, {\"id\": \"quick1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Check-in\", \"col\": 4}}, {\"id\": \"quick2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Events\", \"col\": 4}}, {\"id\": \"operations\", \"type\": \"card\", \"data\": {\"card_name\": \"Operations\", \"col\": 4}}, {\"id\": \"masters\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"settings\", \"type\": \"card\", \"data\": {\"card_name\": \"Settings\", \"col\": 4}}]",
+ "content": "[{\"id\":\"welcome\",\"type\":\"header\",\"data\":{\"text\":\"<b>AV RSVP</b>\",\"col\":12}},{\"id\":\"organizer_dashboard\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Organizer Dashboard\",\"col\":4}},{\"id\":\"quick0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Event Overview\",\"col\":4}},{\"id\":\"quick1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Check-in\",\"col\":4}},{\"id\":\"quick2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Events\",\"col\":4}},{\"id\":\"operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"settings\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
  "links": [
   {
    "type": "Card Break",
    "label": "Operations"
+  },
+  {
+   "type": "Link",
+   "label": "Organizer Dashboard",
+   "link_type": "Page",
+   "link_to": "rsvp-organizer-dashboard",
+   "is_query_report": 0
   },
   {
    "type": "Link",
@@ -119,6 +126,11 @@
   }
  ],
  "shortcuts": [
+  {
+   "label": "Organizer Dashboard",
+   "type": "Page",
+   "link_to": "rsvp-organizer-dashboard"
+  },
   {
    "label": "Event Overview",
    "type": "Page",
