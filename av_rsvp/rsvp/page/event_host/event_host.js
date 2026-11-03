@@ -20,6 +20,7 @@ frappe.pages["event-host"].on_page_load = function (wrapper) {
     body.find("#host-prev").on("click", () => {pageNumber--; load();});
     body.find("#host-next").on("click", () => {pageNumber++; load();});
   }
+  page.add_inner_button(__("Post-Event Dashboard"), () => {frappe.route_options = {event: event.get_value()}; frappe.set_route("rsvp-post-event-dashboard");});
   page.add_inner_button(__("Refresh"), load);
   api("host_events").then(events => {
     event.df.options = "\n" + events.map(e => e.name).join("\n");

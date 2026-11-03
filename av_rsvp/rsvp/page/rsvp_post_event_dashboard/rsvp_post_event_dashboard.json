@@ -1,0 +1,25 @@
+{
+ "doctype": "Page",
+ "name": "rsvp-post-event-dashboard",
+ "page_name": "rsvp-post-event-dashboard",
+ "title": "Post-Event Dashboard",
+ "module": "RSVP",
+ "standard": "Yes",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "RSVP Administrator"
+  },
+  {
+   "role": "Event Manager"
+  },
+  {
+   "role": "Event Coordinator"
+  },
+  {
+   "role": "Event Host"
+  }
+ ]
+}

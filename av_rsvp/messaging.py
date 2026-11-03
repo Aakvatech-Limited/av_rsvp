@@ -63,8 +63,10 @@ def deliver_message(log_name):
             body += f"<p>Your response: {escape(invitation.response_status)}. Confirmed places across functions: {sum(r.allocation == 'Confirmed' for r in answers)}. Waitlisted places: {sum(r.allocation == 'Waitlisted' for r in answers)}.</p>"
         body += f'<p><a href="{escape(invitation_url(invitation), quote=True)}">View invitation and attendance details</a></p>'
         attachments = []
-        if log.purpose == "Confirmation" and invitation.response_status == "Attending" and any(
-            r.allocation == "Confirmed" for r in answers
+        if (
+            log.purpose == "Confirmation"
+            and invitation.response_status == "Attending"
+            and any(r.allocation == "Confirmed" for r in answers)
         ):
             from frappe.utils import get_system_timezone
 
@@ -73,7 +75,9 @@ def deliver_message(log_name):
             attachments.append(
                 {
                     "fname": "event-invitation.ics",
-                    "fcontent": calendar_content(event, source_timezone=get_system_timezone()).encode("utf-8"),
+                    "fcontent": calendar_content(event, source_timezone=get_system_timezone()).encode(
+                        "utf-8"
+                    ),
                 }
             )
         queue = frappe.sendmail(

@@ -1,0 +1,141 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Event Organizer Assessment",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "is_submittable": 1,
+ "track_changes": 1,
+ "field_order": [
+  "event",
+  "assessed_by",
+  "assessment_date",
+  "published",
+  "objectives_achieved",
+  "planning_assessment",
+  "execution_assessment",
+  "issues_encountered",
+  "successes",
+  "lessons_learned",
+  "recommendations"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "label": "Event",
+   "fieldtype": "Link",
+   "options": "RSVP Event",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "assessed_by",
+   "label": "Assessed By",
+   "fieldtype": "Link",
+   "options": "User",
+   "read_only": 1,
+   "default": "__user",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assessment_date",
+   "label": "Assessment Date",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "published",
+   "label": "Published to Host",
+   "fieldtype": "Check",
+   "default": "0",
+   "allow_on_submit": 1,
+   "description": "Submit first, then enable to share this assessment with assigned hosts."
+  },
+  {
+   "fieldname": "objectives_achieved",
+   "label": "Objectives Achieved",
+   "fieldtype": "Select",
+   "options": "Fully\nPartly\nNo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "planning_assessment",
+   "label": "Planning Assessment",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "execution_assessment",
+   "label": "Execution Assessment",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "issues_encountered",
+   "label": "Issues Encountered",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "successes",
+   "label": "Successes",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "lessons_learned",
+   "label": "Lessons Learned",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "recommendations",
+   "label": "Recommendations",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "print": 1,
+   "report": 1
+  },
+  {
+   "role": "RSVP Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "print": 1,
+   "report": 1
+  },
+  {
+   "role": "Event Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "print": 1,
+   "report": 1
+  },
+  {
+   "role": "Event Coordinator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "print": 1,
+   "report": 1
+  },
+  {
+   "role": "Event Host",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "submit": 0,
+   "print": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

@@ -1,5 +1,6 @@
 frappe.ui.form.on("RSVP Event", {
   refresh(frm) {
+    if (!frm.is_new()) frm.add_custom_button(__("Post-Event Dashboard"), () => {frappe.route_options = {event: frm.doc.name}; frappe.set_route("rsvp-post-event-dashboard");});
     if (frm.perm?.some(permission=>permission.write)) {
       frm.add_custom_button(__("Attendance Before Contact Details"),()=>{
         const existing = Object.fromEntries((frm.doc.form_sections || []).map(row => [row.section, row.hide]));
