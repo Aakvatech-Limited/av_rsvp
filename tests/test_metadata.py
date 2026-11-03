@@ -1,5 +1,6 @@
 import ast
 import json
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -23,6 +24,20 @@ class Metadata(unittest.TestCase):
             for field in doc["fields"]:
                 if field["fieldtype"] in {"Link", "Table"} and field.get("options", "").startswith("RSVP"):
                     self.assertIn(field["options"], doctypes)
+
+    def test_pilot_dependency_declarations(self):
+        metadata = tomllib.loads((ROOT.parent / "pyproject.toml").read_text())
+        declared = metadata["tool"]["bench"]["frappe-dependencies"]
+        self.assertTrue(declared.get("frappe"))
+        required = []
+        for node in ast.walk(ast.parse((ROOT / "hooks.py").read_text())):
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "required_apps" for target in node.targets
+            ):
+                required = [name.rsplit("/", 1)[-1] for name in ast.literal_eval(node.value)]
+        # Pilot treats Frappe as implicit and compares only additional apps.
+        self.assertNotIn("frappe", required)
+        self.assertFalse(set(required) - (set(declared) - {"frappe"}))
 
     def test_navigation_targets_exist(self):
         available = {}
