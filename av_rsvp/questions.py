@@ -72,3 +72,9 @@ def section_order(rows):
     if "Event Information" not in ordered:
         ordered.insert(0, "Event Information")
     return ordered + [section for section in FORM_SECTIONS if section not in ordered]
+
+
+def hidden_sections(rows):
+    """Return the hidden sections using the same validated section identifiers."""
+    section_order(rows)
+    return [row.get("section") for row in rows if row.get("hide")]
