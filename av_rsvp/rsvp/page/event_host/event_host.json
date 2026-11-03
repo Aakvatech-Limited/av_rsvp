@@ -1,0 +1,19 @@
+{
+ "doctype": "Page",
+ "name": "event-host",
+ "page_name": "event-host",
+ "module": "RSVP",
+ "standard": "Yes",
+ "title": "Event Host Overview",
+ "roles": [
+  {
+   "role": "Event Host"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "RSVP Administrator"
+  }
+ ]
+}
