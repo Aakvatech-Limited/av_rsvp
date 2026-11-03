@@ -97,12 +97,13 @@ frappe.ready(async () => {
       "Guest Details": `<div id="people">${people.map(personCard).join("")}</div>${allowExtra() ? `<button type="button" class="secondary" id="add-person" ${people.length >= state.invitation.max_attendees ? "disabled" : ""}>+ Add guest</button>` : ""}`,
       "Additional Questions": `${questionFields()}`,
       "Message to Organiser": `<section class="rsvp-card"><label class="rsvp-label" for="notes">Message to the organiser</label><textarea id="notes" maxlength="1000">${esc(state.notes || "")}</textarea></section>`,
+      "Footer Text": "",
     };
-    const defaults = ["Event Information", "Contact Details", "Response", "Guest Details", "Additional Questions", "Message to Organiser"];
+    const defaults = ["Event Information", "Contact Details", "Response", "Guest Details", "Additional Questions", "Message to Organiser", "Footer Text"];
     const configured = [...(state.event.form_sections || [])];
     if (!configured.includes("Event Information")) configured.unshift("Event Information");
     const ordered = [...new Set([...configured, ...defaults])].filter(section=>Object.hasOwn(sections,section));
-    return ordered.filter(section=>!sectionHidden(section) && (editable || section === "Event Information")).map(section=>`<div data-form-section="${esc(section)}">${sections[section]}</div>`).join("") + (editable ? `<section class="rsvp-card"><p class="rsvp-muted rsvp-multiline">${esc(e.privacy_notice || "Your information is used to organise this event. Share only the details needed for your attendance.")}</p><div class="rsvp-actions"><button type="submit" id="save-response">${registering ? "Register and save RSVP" : "Save response"}</button></div>${e.footer_text ? `<div class="rsvp-multiline rsvp-footer-text">${e.footer_text}</div>` : ""}</section>` : (e.footer_text ? `<section class="rsvp-card rsvp-multiline rsvp-footer-text">${e.footer_text}</section>` : ""));
+    return ordered.filter(section=>section !== "Footer Text" && !sectionHidden(section) && (editable || section === "Event Information" || section === "Response")).map(section=>`<div data-form-section="${esc(section)}">${sections[section]}</div>`).join("") + (editable ? `<section class="rsvp-card"><p class="rsvp-muted rsvp-multiline">${esc(e.privacy_notice || "Your information is used to organise this event. Share only the details needed for your attendance.")}</p><div class="rsvp-actions"><button type="submit" id="save-response">${registering ? "Register and save RSVP" : "Save response"}</button></div>${e.footer_text && !sectionHidden("Footer Text") ? `<div class="rsvp-multiline rsvp-footer-text">${e.footer_text}</div>` : ""}</section>` : (e.footer_text && !sectionHidden("Footer Text") ? `<section class="rsvp-card rsvp-multiline rsvp-footer-text">${e.footer_text}</section>` : ""));
   }
   function render(saved = false) {
     const e = state.event;
