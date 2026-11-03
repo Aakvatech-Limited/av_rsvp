@@ -12,6 +12,7 @@ frappe.ready(async () => {
   const allowExtra = () => state.event.allow_additional_guests !== 0 && state.event.allow_additional_guests !== false;
   const hideFirst = () => Boolean(state.event.hide_first_guest_details);
   const showDiet = () => state.event.show_dietary_preferences !== 0 && state.event.show_dietary_preferences !== false;
+  const showMessage = () => state.event.show_message_to_organizer !== 0 && state.event.show_message_to_organizer !== false;
   const api = async (method, args) => (await frappe.call({method: `av_rsvp.api.${method}`, args, type: "POST"})).message;
   const date = value => value ? new Date(value.replace(" ", "T")).toLocaleString(undefined, {dateStyle: "medium", timeStyle: "short"}) : "";
   function error(message) {
@@ -95,13 +96,13 @@ frappe.ready(async () => {
       "Response": `<section class="rsvp-card"><h2>Your response</h2><label class="rsvp-label" for="overall">Will you be joining us?</label><select id="overall">${["Attending", "Declined", ...(e.allow_maybe ? ["Maybe"] : [])].map(v => option(v, state.invitation.response_status === "Pending" ? "Attending" : state.invitation.response_status)).join("")}</select></section>`,
       "Guest Details": `<div id="people">${people.map(personCard).join("")}</div>${allowExtra() ? `<button type="button" class="secondary" id="add-person" ${people.length >= state.invitation.max_attendees ? "disabled" : ""}>+ Add guest</button>` : ""}`,
       "Additional Questions": `${questionFields()}`,
-      "Message to Organiser": `<section class="rsvp-card"><label class="rsvp-label" for="notes">Message to the organiser</label><textarea id="notes" maxlength="1000">${esc(state.notes || "")}</textarea></section>`,
+      "Message to Organiser": showMessage() ? `<section class="rsvp-card"><label class="rsvp-label" for="notes">Message to the organiser</label><textarea id="notes" maxlength="1000">${esc(state.notes || "")}</textarea></section>` : "",
     };
     const defaults = ["Event Information", "Contact Details", "Response", "Guest Details", "Additional Questions", "Message to Organiser"];
     const configured = [...(state.event.form_sections || [])];
     if (!configured.includes("Event Information")) configured.unshift("Event Information");
     const ordered = [...new Set([...configured, ...defaults])].filter(section=>Object.hasOwn(sections,section));
-    return ordered.filter(section=>editable || section === "Event Information").map(section=>`<div data-form-section="${esc(section)}">${sections[section]}</div>`).join("") + (editable ? `<section class="rsvp-card"><p class="rsvp-muted rsvp-multiline">${esc(e.privacy_notice || "Your information is used to organise this event. Share only the details needed for your attendance.")}</p><div class="rsvp-actions"><button type="submit" id="save-response">${registering ? "Register and save RSVP" : "Save response"}</button></div></section>` : "");
+    return ordered.filter(section=>editable || section === "Event Information").map(section=>`<div data-form-section="${esc(section)}">${sections[section]}</div>`).join("") + (editable ? `<section class="rsvp-card"><p class="rsvp-muted rsvp-multiline">${esc(e.privacy_notice || "Your information is used to organise this event. Share only the details needed for your attendance.")}</p><div class="rsvp-actions"><button type="submit" id="save-response">${registering ? "Register and save RSVP" : "Save response"}</button></div>${e.footer_text ? `<div class="rsvp-multiline rsvp-footer-text">${e.footer_text}</div>` : ""}</section>` : (e.footer_text ? `<section class="rsvp-card rsvp-multiline rsvp-footer-text">${e.footer_text}</section>` : ""));
   }
   function render(saved = false) {
     const e = state.event;
@@ -112,10 +113,10 @@ frappe.ready(async () => {
       ${state.attendees.length ? `<section class="rsvp-card"><h2>Your attendance details</h2>${state.attendees.map(p => `<div class="rsvp-pass">${p.entry_qr ? `<img src="${p.entry_qr}" alt="Entry QR code for ${esc(p.attendee_name)}">` : ""}<div><strong>${esc(p.attendee_name)}</strong>${p.functions.map(a => `<div>${esc(state.functions.find(f => f.name === a.function)?.function_title || "")} <span class="rsvp-badge">${esc(a.allocation)}</span></div>`).join("")}${p.entry_token ? '<small>Present this pass at the event.</small>' : ""}</div></div>`).join("")}<div class="rsvp-actions"><button type="button" class="secondary" id="print-passes">Print passes</button>${token ? '<button type="button" class="secondary" id="calendar">Add to calendar</button>' : ""}</div></section>` : ""}
       `;
     root.querySelector("#add-person")?.addEventListener("click", () => {
-      capture(); state.notes = root.querySelector("#notes").value; state.invitation.response_status = root.querySelector("#overall").value;
+      capture(); state.notes = root.querySelector("#notes")?.value || ""; state.invitation.response_status = root.querySelector("#overall").value;
       people.push({attendee_name: "", age_group: "Adult", dietary_requirements: "", accessibility_requests: "", functions: state.functions.map(f => ({function: f.name, attendance: "Attending", meal_choice: ""}))}); render();
     });
-    root.querySelectorAll("[data-remove]").forEach(button => button.addEventListener("click", () => {capture(); state.notes = root.querySelector("#notes").value; state.invitation.response_status = root.querySelector("#overall").value; people.splice(Number(button.dataset.remove), 1); render();}));
+    root.querySelectorAll("[data-remove]").forEach(button => button.addEventListener("click", () => {capture(); state.notes = root.querySelector("#notes")?.value || ""; state.invitation.response_status = root.querySelector("#overall").value; people.splice(Number(button.dataset.remove), 1); render();}));
     root.querySelector("#response-form")?.addEventListener("submit", async event => {
       event.preventDefault(); capture(); const button = root.querySelector("#save-response"); button.disabled = true;
       try {
@@ -128,7 +129,7 @@ frappe.ready(async () => {
           }
         }
         if (response !== "Attending") submitted.forEach(p => p.functions.forEach(f => {f.attendance = response; f.meal_choice = "";}));
-        const notes = root.querySelector("#notes").value;
+        const notes = showMessage() ? (root.querySelector("#notes")?.value || "") : "";
         if (registering) {
           const result = await api("register", {event:publicEvent, ...contact, registration_key:retryKey, response, people:JSON.stringify(submitted), notes, additional_answers:JSON.stringify(additionalAnswers)});
           token = result.token;
