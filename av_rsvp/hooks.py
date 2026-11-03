@@ -10,7 +10,7 @@ fixtures = [
     {
         "dt": "Role",
         "filters": [
-            ["name", "in", ["RSVP Administrator", "Event Manager", "Event Coordinator", "Check-in Operator"]]
+            ["name", "in", ["RSVP Administrator", "Event Manager", "Event Coordinator", "Check-in Operator", "Event Host"]]
         ],
     }
 ]
@@ -22,7 +22,14 @@ add_to_apps_screen = [
         "title": "AV RSVP",
         "route": "/app/rsvp",
         "has_permission": "av_rsvp.permissions.app_access",
-    }
+    },
+    {
+        "name": "av_rsvp_host",
+        "logo": app_logo_url,
+        "title": "Event Host",
+        "route": "/app/event-host",
+        "has_permission": "av_rsvp.permissions.host_app_access",
+    },
 ]
 scheduler_events = {
     "daily": ["av_rsvp.messaging.send_due_reminders"],
