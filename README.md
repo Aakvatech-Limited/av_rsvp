@@ -60,6 +60,7 @@ Open **AV RSVP → RSVP** from the Apps screen. The workspace links to Event Ove
 
 1. On **RSVP Event**, enable **Allow Public Registration** and set **People per Public Registration** (including the primary guest; default 1).
 2. Publish the event, then click **Public Registration Page**. Share the URL `/rsvp?event=YOUR-EVENT-ID`.
+   Use **Registration QR Code** on the event to preview a scannable registration link, **Copy QR Image**, **Download PNG**, or **Copy Registration Link** for emails, WhatsApp, invitations and posters. Image clipboard support requires HTTPS and a compatible browser; PNG download is available as a fallback.
 3. Guests enter their name, email, optional phone/organisation, attendees and function responses. No Frappe account or prior invitation is required.
 4. Submitting creates an **RSVP Guest**, a linked **RSVP Invitation**, attendees and function responses in one transaction. Normal capacity, meal and waiting-list rules apply.
 5. The page shows confirmations and entry passes and switches to a private update link. Guests should keep this link; confirmation emails also include it.
