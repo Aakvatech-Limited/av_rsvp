@@ -67,6 +67,16 @@ Open **AV RSVP → RSVP** from the Apps screen. The workspace links to Event Ove
 
 Private events remain private by default. Disabling public registration stops new registrations; existing private links still work until the event closes. Closed events and expired deadlines reject new registrations. Repeated submissions from the same loaded form reuse that booking. A fresh form can create another booking: email/phone are unverified, so the app deliberately does not merge or reveal existing guest records based on matching contact details. Organisers can review duplicates. Public registration does not verify email ownership or reserve one booking per email.
 
+## Configure the guest form
+
+Open **RSVP Event → Guest Form**:
+
+- **Show Dietary Preferences** shows or hides the optional preference for each attendee. Enter one choice per line in **Dietary Preference Options** for a dropdown, or leave the options empty for free text. This is separate from function meal choices.
+- **Allow Additional Guests** shows or hides Add Guest. Turning it off limits new public registrations and new private RSVPs to the primary attendee. Previously booked groups can still update or cancel their existing attendees; new extra attendees are rejected on the server.
+- **Additional Questions** is an optional child table. Enter the question and choose Text, Long Text, Select or Check. Select questions need one choice per line. Drag rows to change question order. These questions are all optional and appear once per RSVP, after attendee details.
+
+Answers are saved under **RSVP Invitation → Additional Answers** and restored when the guest reopens their private link or staff record a response. Removed questions retain their historical answers in Desk but are no longer exposed on the guest form. Hiding dietary preferences similarly keeps existing stored values without returning them to guests. Dietary visibility and additional guests remain enabled by default to preserve existing event behaviour.
+
 ## Counts and capacity
 
 An invitation is a household/company booking; an attendee is a person; a function response is that person's place in a particular function. One person attending two functions counts once in Confirmed People and twice in Confirmed Places. Invitation response totals count invitations, not people.
@@ -114,7 +124,7 @@ The CI workflow runs lightweight checks and a separate clean Frappe installation
 
 ## Later extensions
 
-Paid tickets/ERPNext accounting, automated WhatsApp messaging, seating plans, offline check-in, multilingual portal translations and custom-question builders are not part of this release. There are no hard-coded links to optional ERPNext DocTypes.
+Paid tickets/ERPNext accounting, automated WhatsApp messaging, seating plans, offline check-in, multilingual portal translations and conditional question logic are not part of this release. There are no hard-coded links to optional ERPNext DocTypes.
 
 ## License
 

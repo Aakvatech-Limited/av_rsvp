@@ -24,6 +24,11 @@
   "multiple_functions",
   "allow_maybe",
   "enable_waitlist",
+  "guest_form",
+  "show_dietary_preferences",
+  "dietary_options",
+  "allow_additional_guests",
+  "additional_questions",
   "contact_email",
   "contact_phone",
   "team",
@@ -164,6 +169,39 @@
    "default": "1",
    "depends_on": "eval:doc.allow_public_registration",
    "description": "Includes the primary guest. Between 1 and 100."
+  },
+  {
+   "fieldname": "guest_form",
+   "label": "Guest Form",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "show_dietary_preferences",
+   "label": "Show Dietary Preferences",
+   "fieldtype": "Check",
+   "default": "1",
+   "description": "An optional preference for each attendee."
+  },
+  {
+   "fieldname": "dietary_options",
+   "label": "Dietary Preference Options",
+   "fieldtype": "Small Text",
+   "depends_on": "eval:doc.show_dietary_preferences",
+   "description": "One choice per line. Leave empty to allow an optional free-text preference."
+  },
+  {
+   "fieldname": "allow_additional_guests",
+   "label": "Allow Additional Guests",
+   "fieldtype": "Check",
+   "default": "1",
+   "description": "When disabled, new RSVPs allow only the primary attendee. Existing parties can still update their booked attendees."
+  },
+  {
+   "fieldname": "additional_questions",
+   "label": "Additional Questions",
+   "fieldtype": "Table",
+   "options": "RSVP Event Question",
+   "description": "Optional questions asked once per RSVP. Drag rows to change their display order."
   }
  ],
  "permissions": [

@@ -4,6 +4,7 @@ import frappe
 from frappe.utils import cint, get_datetime, now_datetime
 
 from av_rsvp.domain import allocation_for, clean_text, validate_people
+from av_rsvp.questions import choices, validate_answers
 from av_rsvp.security import (
     current_count,
     current_doc,
@@ -57,6 +58,8 @@ def snapshot(invitation, event):
         fields=["attendee", "function", "attendance", "allocation", "meal_choice"],
     )
     for person in people:
+        if not event.show_dietary_preferences:
+            person["dietary_requirements"] = ""
         nonce = person.pop("entry_nonce")
         person["functions"] = [
             dict(function=f.name, attendance="Declined", allocation="Unallocated", meal_choice="")
@@ -83,9 +86,14 @@ def snapshot(invitation, event):
     return dict(
         event=public_event_details(event),
         notes=invitation.notes,
+        additional_answers={
+            row.question_key: row.answer
+            for row in invitation.additional_answers
+            if row.question_key in {q.question_key for q in event.additional_questions}
+        },
         invitation=dict(
             guest_name=invitation.guest_name,
-            max_attendees=invitation.max_attendees,
+            max_attendees=invitation.max_attendees if event.allow_additional_guests else max(1, len(people)),
             response_status=invitation.response_status,
         ),
         functions=functions,
@@ -108,11 +116,18 @@ def public_event_details(event):
             "venue",
             "map_url",
             "allow_maybe",
+            "show_dietary_preferences",
+            "dietary_options",
+            "allow_additional_guests",
             "contact_email",
             "contact_phone",
             "privacy_notice",
         ]
     } | {
+        "additional_questions": [
+            {key: row.get(key) for key in ["question_key", "question_label", "question_type", "options"]}
+            for row in event.additional_questions
+        ],
         "description": event_text(event.description),
         "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
         **{
@@ -122,7 +137,9 @@ def public_event_details(event):
     }
 
 
-def apply_response(invitation_name, response, people, notes="", actor=None, expected_token_hash=None):
+def apply_response(
+    invitation_name, response, people, notes="", actor=None, expected_token_hash=None, additional_answers=None
+):
     event_name = frappe.db.get_value("RSVP Invitation", invitation_name, "event")
     lock_event(event_name)
     invitation = current_doc("RSVP Invitation", invitation_name)
@@ -141,6 +158,18 @@ def apply_response(invitation_name, response, people, notes="", actor=None, expe
     try:
         notes = clean_text(notes, 1000)
         validate_people(people, cint(invitation.max_attendees), functions, bool(event.allow_maybe))
+        answers = (
+            validate_answers(event.additional_questions, frappe.parse_json(additional_answers))
+            if additional_answers is not None
+            else None
+        )
+        dietary_choices = choices(event.dietary_options) if event.show_dietary_preferences else []
+        if dietary_choices and any(
+            p.get("dietary_requirements", "").strip()
+            and p["dietary_requirements"].strip() not in dietary_choices
+            for p in people
+        ):
+            raise ValueError("Choose a dietary preference from the event options, or leave it empty.")
     except (ValueError, TypeError) as error:
         frappe.throw(str(error))
     if response == "Attending" and (
@@ -157,6 +186,9 @@ def apply_response(invitation_name, response, people, notes="", actor=None, expe
             "RSVP Attendee", filters={"invitation": invitation.name}, fields=["name", "active"]
         )
     }
+    if not event.allow_additional_guests and len(people) > 1:
+        if any(not p.get("name") or not existing.get(p["name"], {}).get("active") for p in people):
+            frappe.throw("Additional guests are disabled for this event.")
     if any(p.get("name") and p["name"] not in existing for p in people):
         frappe.throw("An attendee does not belong to this invitation.", frappe.PermissionError)
     keep = {p.get("name") for p in people if p.get("name")}
@@ -190,6 +222,8 @@ def apply_response(invitation_name, response, people, notes="", actor=None, expe
             else:
                 doc = current_doc("RSVP Attendee", person["name"])
             for key in ["attendee_name", "age_group", "dietary_requirements", "accessibility_requests"]:
+                if key == "dietary_requirements" and not event.show_dietary_preferences:
+                    continue
                 doc.set(key, person.get(key, "Adult" if key == "age_group" else "").strip())
             doc.active = 1
             save_doc(doc)
@@ -246,6 +280,15 @@ def apply_response(invitation_name, response, people, notes="", actor=None, expe
                 row.allocation = allocation
                 row.meal_choice = answer.get("meal_choice", "") if answer["attendance"] == "Attending" else ""
                 save_doc(row)
+        if answers is not None:
+            existing_answers = {row.question_key: row for row in invitation.additional_answers}
+            labels = {row.question_key: row.question_label for row in event.additional_questions}
+            for key, value in answers.items():
+                row = existing_answers.get(key)
+                if not row:
+                    row = invitation.append("additional_answers", {"question_key": key})
+                row.question_label = labels[key]
+                row.answer = value
         invitation.response_status = response
         invitation.responded_on = now_datetime()
         invitation.response_by = actor or frappe.session.user

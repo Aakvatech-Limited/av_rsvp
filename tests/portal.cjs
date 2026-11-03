@@ -25,6 +25,7 @@ const fixture = {
           if(method.endsWith('.respond') || method.endsWith('.register')) {
             window.testState.attendees=JSON.parse(args.people).map((p,i)=>({...p,name:'person-'+i,functions:p.functions.map(f=>({...f,allocation:f.attendance==='Attending'?'Confirmed':'Cancelled'}))}));
             window.testState.invitation.response_status=args.response;
+            window.testState.additional_answers=JSON.parse(args.additional_answers || "{}");
           }
           if(method.endsWith('.register')) return {message:{token:'b'.repeat(64),registration:structuredClone(window.testState)}};
           return {message:structuredClone(window.testState)};
@@ -54,6 +55,37 @@ const fixture = {
       assert.equal(calls.length,2);
       if(publicMode) {assert.equal(calls[0].method,'av_rsvp.api.register');assert.match(calls[0].args.registration_key,/^[a-f0-9]{64}$/);assert.equal(calls[0].args.email,'new@example.com');assert.equal(calls[1].args.token,'b'.repeat(64));}
       assert.equal(JSON.parse(calls[1].args.people)[0].functions[0].attendance,'Declined');
+      await page.evaluate(()=>{
+        Object.assign(window.testState.event,{show_dietary_preferences:0,allow_additional_guests:0,additional_questions:[
+          {question_key:'transport',question_label:'Transport',question_type:'Select',options:'Bus\nCar'},
+          {question_key:'comments',question_label:'Comments <img src=x onerror=alert(1)>',question_type:'Long Text'},
+          {question_key:'contact',question_label:'Contact me',question_type:'Check'}
+        ]});
+      });
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      await page.getByRole('heading',{name:'Additional questions (optional)',exact:true}).waitFor();
+      assert.equal(await page.locator('#add-person').count(),0);
+      assert.equal(await page.locator('[data-field="dietary_requirements"]').count(),0);
+      assert.equal(await page.locator('img[src="x"]').count(),0);
+      assert.deepEqual(await page.locator('[data-question]').evaluateAll(nodes=>nodes.map(n=>n.dataset.question)),['transport','comments','contact']);
+      await page.locator('#question-transport').selectOption('Bus');
+      await page.locator('#question-comments').fill('Window seat please');
+      await page.locator('#question-contact').check();
+      await page.locator('[data-remove="1"]').click();
+      assert.equal(await page.locator('#question-transport').inputValue(),'Bus');
+      assert.equal(await page.locator('#question-comments').inputValue(),'Window seat please');
+      assert.equal(await page.locator('#question-contact').isChecked(),true);
+      await page.getByRole('button',{name:'Save response',exact:true}).click();
+      await page.getByRole('status').waitFor();
+      assert.equal(await page.locator('#question-comments').inputValue(),'Window seat please');
+      const last=await page.evaluate(()=>window.calls.at(-1));
+      assert.deepEqual(JSON.parse(last.args.additional_answers),{transport:'Bus',comments:'Window seat please',contact:'1'});
+      await page.evaluate(()=>{window.testState.event.show_dietary_preferences=1;window.testState.event.dietary_options='Vegetarian\nStandard';});
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      const diet=page.locator('select[data-field="dietary_requirements"]');
+      await diet.waitFor();
+      assert.equal(await diet.getAttribute('required'),null);
+      assert.equal(await diet.locator('option').first().getAttribute('value'),'');
       assert.deepEqual(errors,[]);
       await page.screenshot({path:`/tmp/rsvp-portal-${publicMode?"public":"private"}-${viewport.width}.png`,fullPage:true});
       await page.close();
