@@ -84,7 +84,7 @@ def snapshot(invitation, event):
     # Explicit projection: no team, guest directory, delivery logs or invitation secrets.
     return dict(
         event=public_event_details(event),
-        notes=invitation.notes,
+        notes=invitation.notes if event.show_message_to_organizer else "",
         additional_answers={
             row.question_key: row.answer
             for row in invitation.additional_answers
@@ -122,6 +122,7 @@ def public_event_details(event):
             "allow_additional_guests",
             "hide_first_guest_details",
             "show_event_information",
+            "show_message_to_organizer",
             "contact_email",
             "contact_phone",
             "privacy_notice",
@@ -134,6 +135,7 @@ def public_event_details(event):
             for row in event.additional_questions
         ],
         "description": frappe.utils.sanitize_html(event.description or ""),
+        "footer_text": frappe.utils.sanitize_html(event.footer_text or ""),
         "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
         **{
             key: display_datetime(event.get(key), event.timezone)
@@ -212,7 +214,7 @@ def apply_response(
     if event.hide_first_guest_details:
         people = primary_contact_person(invitation, functions, people, response)
     try:
-        notes = clean_text(notes, 1000)
+        notes = clean_text(notes, 1000) if event.show_message_to_organizer else invitation.notes
         validate_people(people, cint(invitation.max_attendees), functions, bool(event.allow_maybe))
         answers = (
             validate_answers(event.additional_questions, frappe.parse_json(additional_answers))
