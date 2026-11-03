@@ -66,7 +66,12 @@ class FormSectionOrder(unittest.TestCase):
     def test_hidden_sections_follow_explicit_row_flags(self):
         rows = [{"section": "Message to Organiser", "hide": 1}, {"section": "Event Information", "hide": 0}]
         self.assertEqual(hidden_sections(rows), ["Message to Organiser"])
+        self.assertEqual(hidden_sections([{"section": "Footer Text", "hide": 1}]), ["Footer Text"])
         self.assertEqual(hidden_sections([]), [])
+
+    def test_required_response_cannot_be_hidden(self):
+        with self.assertRaises(ValueError):
+            section_order([{"section": "Response", "hide": 1}])
 
     def test_unknown_and_duplicate_sections_are_rejected(self):
         for rows in [[{"section": "Unknown"}], [{"section": "Response"}] * 2]:
