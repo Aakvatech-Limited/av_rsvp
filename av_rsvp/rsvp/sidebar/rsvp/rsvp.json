@@ -9,9 +9,9 @@
  "items": [
   {
    "type": "Link",
-   "label": "Home",
-   "link_type": "Workspace",
-   "link_to": "RSVP"
+   "label": "Organizer Dashboard",
+   "link_type": "Page",
+   "link_to": "rsvp-organizer-dashboard"
   },
   {
    "type": "Section Break",
@@ -23,6 +23,12 @@
    "label": "Event Overview",
    "link_type": "Page",
    "link_to": "rsvp-overview"
+  },
+  {
+   "type": "Link",
+   "label": "Organizer Dashboard",
+   "link_type": "Page",
+   "link_to": "rsvp-organizer-dashboard"
   },
   {
    "type": "Link",
