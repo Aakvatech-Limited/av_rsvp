@@ -80,31 +80,7 @@ def snapshot(invitation, event):
             function[key] = display_datetime(function[key], event.timezone)
     # Explicit projection: no team, guest directory, delivery logs or invitation secrets.
     return dict(
-        event={
-            k: event.get(k)
-            for k in [
-                "event_title",
-                "host_name",
-                "starts_on",
-                "ends_on",
-                "timezone",
-                "rsvp_deadline",
-                "venue",
-                "map_url",
-                "allow_maybe",
-                "contact_email",
-                "contact_phone",
-                "privacy_notice",
-            ]
-        }
-        | {
-            "description": frappe.utils.strip_html(event.description or ""),
-            "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
-            **{
-                key: display_datetime(event.get(key), event.timezone)
-                for key in ["starts_on", "ends_on", "rsvp_deadline"]
-            },
-        },
+        event=public_event_details(event),
         notes=invitation.notes,
         invitation=dict(
             guest_name=invitation.guest_name,
@@ -115,6 +91,34 @@ def snapshot(invitation, event):
         attendees=people,
         editable=event.status == "Published" and now_datetime() <= get_datetime(event.rsvp_deadline),
     )
+
+
+def public_event_details(event):
+    """Safe event fields shared by private invitations and public registration."""
+    return {
+        k: event.get(k)
+        for k in [
+            "event_title",
+            "host_name",
+            "starts_on",
+            "ends_on",
+            "timezone",
+            "rsvp_deadline",
+            "venue",
+            "map_url",
+            "allow_maybe",
+            "contact_email",
+            "contact_phone",
+            "privacy_notice",
+        ]
+    } | {
+        "description": frappe.utils.strip_html(event.description or ""),
+        "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
+        **{
+            key: display_datetime(event.get(key), event.timezone)
+            for key in ["starts_on", "ends_on", "rsvp_deadline"]
+        },
+    }
 
 
 def apply_response(invitation_name, response, people, notes="", actor=None, expected_token_hash=None):

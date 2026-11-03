@@ -52,3 +52,7 @@ Native Datetime fields retain Frappe site-timezone storage and user-timezone Des
 ## Operational limits
 
 Guest data is stored on the site's database; this release does not create separate tenant boundaries within one site. Use separate sites when organisers require complete administrative isolation. Waiting lists allocate individuals, check-in requires connectivity, and per-invitation allowances are capped at 100 people. Large-event load tests and a live-site user acceptance pass are required before production rollout.
+
+## Public registration
+
+`/rsvp?event=EVENT-ID` uses `get_registration` and `register` POST endpoints. Events must opt in and remain published before their deadline. Public metadata is explicitly projected. Registration uses the event lock and the existing response service to create the guest, invitation and RSVP atomically. A random 256-bit client secret, hashed with the event ID, identifies retries; it is cleared on invitation revocation or renewal. Matching email/phone never grants existing-record access. The resulting private invitation token is returned only to the registering browser and passed to the normal guest portal in the URL fragment. No User document is created.

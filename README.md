@@ -2,7 +2,7 @@
 
 **Personal invitations. Reliable guest counts. Simple event entry.**
 
-AV RSVP is a standalone Frappe app for invitation-only events, family and company invitations, multi-function programmes, meal planning, waiting lists, and QR check-in. Guests respond from a private mobile-friendly link without creating an account. Organisers manage events in Frappe Desk.
+AV RSVP is a standalone Frappe app for public registration and invitation-only events, family and company invitations, multi-function programmes, meal planning, waiting lists, and QR check-in. Guests respond from a private mobile-friendly link without creating an account. Organisers manage events in Frappe Desk.
 
 Built by **Aakvatech Limited**. No ERPNext dependency.
 
@@ -10,6 +10,7 @@ Built by **Aakvatech Limited**. No ERPNext dependency.
 
 - Events with a venue, timezone, deadline, banner, description and organising team.
 - One default function for a simple event; separate capacities and meals for multi-function events.
+- Public event registration without an account; creates a guest, invitation and RSVP in one submission.
 - Reusable guest directory, native bulk import, and individual/family/organisation/VIP invitations.
 - Guest allowances include the primary guest, rather than counting only additional people.
 - Attending, Declined and optional Maybe responses, with named adults/children.
@@ -55,6 +56,16 @@ Open **AV RSVP → RSVP** from the Apps screen. The workspace links to Event Ove
 7. Review confirmations and waiting-list places; export catering requirements.
 8. On event day, open **Check-in**, choose the event and function, then scan a pass or search for a confirmed attendee.
 
+## Public registration
+
+1. On **RSVP Event**, enable **Allow Public Registration** and set **People per Public Registration** (including the primary guest; default 1).
+2. Publish the event, then click **Public Registration Page**. Share the URL `/rsvp?event=YOUR-EVENT-ID`.
+3. Guests enter their name, email, optional phone/organisation, attendees and function responses. No Frappe account or prior invitation is required.
+4. Submitting creates an **RSVP Guest**, a linked **RSVP Invitation**, attendees and function responses in one transaction. Normal capacity, meal and waiting-list rules apply.
+5. The page shows confirmations and entry passes and switches to a private update link. Guests should keep this link; confirmation emails also include it.
+
+Private events remain private by default. Disabling public registration stops new registrations; existing private links still work until the event closes. Closed events and expired deadlines reject new registrations. Repeated submissions from the same loaded form reuse that booking. A fresh form can create another booking: email/phone are unverified, so the app deliberately does not merge or reveal existing guest records based on matching contact details. Organisers can review duplicates. Public registration does not verify email ownership or reserve one booking per email.
+
 ## Counts and capacity
 
 An invitation is a household/company booking; an attendee is a person; a function response is that person's place in a particular function. One person attending two functions counts once in Confirmed People and twice in Confirmed Places. Invitation response totals count invitations, not people.
@@ -71,7 +82,7 @@ Waiting-list promotion is FIFO **per person per function**. A family can be part
 | Event Manager | Own events and events assigned at manager level; guest directory and event setup |
 | Event Coordinator | Assigned-event invitation viewing, response entry, communications and reports |
 | Check-in Operator | Assigned-event function/attendee lookup and check-in; no dietary/accessibility fields |
-| Public guest | Only a validated private invitation through purpose-built endpoints |
+| Public guest | Opted-in public event registration, or their private invitation through purpose-built endpoints |
 
 The guest directory is a shared resource for event managers. Event team rows must be paired with matching user roles. Coordinators should use response-entry and communication actions; managers maintain the guest directory and create/edit invitation details.
 
@@ -102,7 +113,7 @@ The CI workflow runs lightweight checks and a separate clean Frappe installation
 
 ## Later extensions
 
-Public registration, paid tickets/ERPNext accounting, automated WhatsApp messaging, seating plans, offline check-in, multilingual portal translations and custom-question builders are not part of this release. There are no hard-coded links to optional ERPNext DocTypes.
+Paid tickets/ERPNext accounting, automated WhatsApp messaging, seating plans, offline check-in, multilingual portal translations and custom-question builders are not part of this release. There are no hard-coded links to optional ERPNext DocTypes.
 
 ## License
 
