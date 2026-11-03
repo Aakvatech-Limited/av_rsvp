@@ -1,6 +1,6 @@
 import unittest
 
-from av_rsvp.questions import FORM_SECTIONS, choices, section_order, validate_answers, validate_questions
+from av_rsvp.questions import FORM_SECTIONS, choices, hidden_sections, section_order, validate_answers, validate_questions
 
 
 class OptionalQuestions(unittest.TestCase):
@@ -62,6 +62,11 @@ class FormSectionOrder(unittest.TestCase):
             section_order([{"section": name} for name in [*FORM_SECTIONS[1:], "Event Information"]])[-1],
             "Event Information",
         )
+
+    def test_hidden_sections_follow_explicit_row_flags(self):
+        rows = [{"section": "Message to Organiser", "hide": 1}, {"section": "Event Information", "hide": 0}]
+        self.assertEqual(hidden_sections(rows), ["Message to Organiser"])
+        self.assertEqual(hidden_sections([]), [])
 
     def test_unknown_and_duplicate_sections_are_rejected(self):
         for rows in [[{"section": "Unknown"}], [{"section": "Response"}] * 2]:
