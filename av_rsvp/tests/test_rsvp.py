@@ -349,6 +349,51 @@ class TestRSVP(IntegrationTestCase):
         with self.assertRaises(frappe.ValidationError):
             self.invitation.save()
 
+    def test_hidden_first_guest_uses_contact_without_guest_input(self):
+        self.open_registration()
+        self.event.hide_first_guest_details = 1
+        self.event.allow_additional_guests = 0
+        self.event.save()
+        frappe.set_user("Guest")
+        result = self.registration(people=[])
+        person = result["registration"]["attendees"][0]
+        self.assertEqual(person.attendee_name, "Public guest")
+        self.assertTrue(person.entry_token)
+        token = result["token"]
+        result = api.respond(token, "Declined", [])
+        self.assertEqual(result["attendees"][0].name, person.name)
+        self.assertEqual(result["attendees"][0].functions[0]["attendance"], "Declined")
+        result = api.respond(token, "Attending", [])
+        self.assertEqual(result["attendees"][0].functions[0]["allocation"], "Confirmed")
+
+    def test_hidden_first_guest_cannot_be_replaced_or_duplicate_attendees_created(self):
+        self.event.hide_first_guest_details = 1
+        self.event.save()
+        person = apply_response(self.invitation.name, "Attending", [])["attendees"][0]
+        result = apply_response(self.invitation.name, "Attending", self.people("Forged name"))
+        self.assertEqual(result["attendees"][0].name, person.name)
+        self.assertEqual(result["attendees"][0].attendee_name, "Asha")
+        self.assertEqual(frappe.db.count("RSVP Attendee", {"invitation": self.invitation.name}), 1)
+        other = self.invite("Juma")
+        foreign = apply_response(other.name, "Attending", [])["attendees"][0]
+        with self.assertRaises(frappe.PermissionError):
+            apply_response(self.invitation.name, "Attending", self.people(attendee=foreign.name))
+        self.event.allow_additional_guests = 0
+        self.event.save()
+        with self.assertRaises(frappe.ValidationError):
+            apply_response(self.invitation.name, "Attending", self.people() + self.people("Extra"))
+
+    def test_hidden_first_guest_still_supports_function_meal_choices(self):
+        self.function.meal_options = "Vegetarian\nStandard"
+        self.function.save()
+        self.event.hide_first_guest_details = 1
+        self.event.save()
+        people = self.people("Ignored name")
+        people[0]["functions"][0]["meal_choice"] = "Vegetarian"
+        result = apply_response(self.invitation.name, "Attending", people)
+        self.assertEqual(result["attendees"][0].attendee_name, "Asha")
+        self.assertEqual(result["attendees"][0].functions[0]["meal_choice"], "Vegetarian")
+
     def open_registration(self):
         self.event.allow_public_registration = 1
         self.event.public_max_attendees = 2

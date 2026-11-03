@@ -71,6 +71,7 @@ Private events remain private by default. Disabling public registration stops ne
 
 Open **RSVP Event → Guest Form**:
 
+- **Hide First Guest Details** removes the Guest 1 details card and uses the main contact as the primary attendee. Turn **Allow Additional Guests** off as well to remove all guest-entry cards. A simple event then needs only contact details and the overall RSVP; function/meal choices remain visible when needed. Attendance, capacity and QR passes still work.
 - **Show Dietary Preferences** shows or hides the optional preference for each attendee. Enter one choice per line in **Dietary Preference Options** for a dropdown, or leave the options empty for free text. This is separate from function meal choices.
 - **Allow Additional Guests** shows or hides Add Guest. Turning it off limits new public registrations and new private RSVPs to the primary attendee. Previously booked groups can still update or cancel their existing attendees; new extra attendees are rejected on the server.
 - **Additional Questions** is an optional child table. Enter the question and choose Text, Long Text, Select or Check. Select questions need one choice per line. Drag rows to change question order. These questions are all optional and appear once per RSVP, after attendee details.

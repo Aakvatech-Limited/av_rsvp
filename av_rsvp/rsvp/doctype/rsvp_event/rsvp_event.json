@@ -25,6 +25,7 @@
   "allow_maybe",
   "enable_waitlist",
   "guest_form",
+  "hide_first_guest_details",
   "show_dietary_preferences",
   "dietary_options",
   "allow_additional_guests",
@@ -202,6 +203,13 @@
    "fieldtype": "Table",
    "options": "RSVP Event Question",
    "description": "Optional questions asked once per RSVP. Drag rows to change their display order."
+  },
+  {
+   "fieldname": "hide_first_guest_details",
+   "label": "Hide First Guest Details",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Use the main contact as the first attendee without asking for Guest 1 details. Turn off Allow Additional Guests as well to hide all guest-entry cards."
   }
  ],
  "permissions": [

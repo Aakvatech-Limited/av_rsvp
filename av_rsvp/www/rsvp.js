@@ -10,6 +10,7 @@ frappe.ready(async () => {
   const esc = value => frappe.utils.escape_html(String(value ?? ""));
   let state, people = [], additionalAnswers = {};
   const allowExtra = () => state.event.allow_additional_guests !== 0 && state.event.allow_additional_guests !== false;
+  const hideFirst = () => Boolean(state.event.hide_first_guest_details);
   const showDiet = () => state.event.show_dietary_preferences !== 0 && state.event.show_dietary_preferences !== false;
   const api = async (method, args) => (await frappe.call({method: `av_rsvp.api.${method}`, args, type: "POST"})).message;
   const date = value => value ? new Date(value.replace(" ", "T")).toLocaleString(undefined, {dateStyle: "medium", timeStyle: "short"}) : "";
@@ -34,15 +35,22 @@ frappe.ready(async () => {
     }
   }
   function option(value, selected) { return `<option value="${esc(value)}" ${value === selected ? "selected" : ""}>${esc(value)}</option>`; }
+  function functionFields(person, index) {
+    return state.functions.map((f, fi) => { const answer = person.functions.find(a => a.function === f.name); const meals = (f.meal_options || "").split("\n").map(s => s.trim()).filter(Boolean); return `<div class="rsvp-function" data-function="${esc(f.name)}"><strong>${esc(f.function_title)}</strong><p class="rsvp-muted">${esc(date(f.starts_on))} · ${esc(f.venue || state.event.venue)}</p>
+      <label class="rsvp-label" for="attendance-${index}-${fi}">Attendance</label><select id="attendance-${index}-${fi}" data-attendance>${["Attending", "Declined", ...(state.event.allow_maybe ? ["Maybe"] : [])].map(v => option(v, answer.attendance)).join("")}</select>
+      ${meals.length ? `<label class="rsvp-label" for="meal-${index}-${fi}">Meal choice</label><select id="meal-${index}-${fi}" data-meal>${option("", answer.meal_choice)}${meals.map(v => option(v, answer.meal_choice)).join("")}</select>` : ""}</div>`; }).join("");
+  }
   function personCard(person, index) {
+    if (index === 0 && hideFirst()) {
+      const needsChoices = state.functions.length > 1 || state.functions.some(f => (f.meal_options || "").trim());
+      return needsChoices ? `<section class="rsvp-card" data-person="0"><h2>Your attendance</h2>${functionFields(person, 0)}</section>` : "";
+    }
     return `<section class="rsvp-card" data-person="${index}">${index > 0 ? `<button type="button" class="remove" data-remove="${index}">Remove</button>` : ""}<h2>Guest ${index + 1}</h2>
       <label class="rsvp-label" for="name-${index}">Full name</label><input id="name-${index}" data-field="attendee_name" value="${esc(person.attendee_name)}" required maxlength="140" autocomplete="name">
       <label class="rsvp-label" for="age-${index}">Guest category</label><select id="age-${index}" data-field="age_group">${["Adult", "Child"].map(v => option(v, person.age_group)).join("")}</select>
       <div class="rsvp-row">${showDiet() ? `<div><label class="rsvp-label" for="diet-${index}">Dietary preference (optional)</label>${(state.event.dietary_options || "").trim() ? `<select id="diet-${index}" data-field="dietary_requirements">${option("", person.dietary_requirements)}${state.event.dietary_options.split(/\r?\n/).map(v=>v.trim()).filter(Boolean).map(v=>option(v,person.dietary_requirements)).join("")}</select>` : `<textarea id="diet-${index}" data-field="dietary_requirements" maxlength="1000">${esc(person.dietary_requirements)}</textarea>`}</div>` : ""}
       <div><label class="rsvp-label" for="access-${index}">Accessibility requests</label><textarea id="access-${index}" data-field="accessibility_requests" maxlength="1000">${esc(person.accessibility_requests)}</textarea></div></div>
-      ${state.functions.map((f, fi) => { const answer = person.functions.find(a => a.function === f.name); const meals = (f.meal_options || "").split("\n").map(s => s.trim()).filter(Boolean); return `<div class="rsvp-function" data-function="${esc(f.name)}"><strong>${esc(f.function_title)}</strong><p class="rsvp-muted">${esc(date(f.starts_on))} · ${esc(f.venue || state.event.venue)}</p>
-      <label class="rsvp-label" for="attendance-${index}-${fi}">Attendance</label><select id="attendance-${index}-${fi}" data-attendance>${["Attending", "Declined", ...(state.event.allow_maybe ? ["Maybe"] : [])].map(v => option(v, answer.attendance)).join("")}</select>
-      ${meals.length ? `<label class="rsvp-label" for="meal-${index}-${fi}">Meal choice</label><select id="meal-${index}-${fi}" data-meal>${option("", answer.meal_choice)}${meals.map(v => option(v, answer.meal_choice)).join("")}</select>` : ""}</div>`; }).join("")}</section>`;
+      ${functionFields(person, index)}</section>`;
   }
   function questionFields() {
     const questions = state.event.additional_questions || [];
@@ -78,6 +86,12 @@ frappe.ready(async () => {
       try {
         const response = root.querySelector("#overall").value;
         const submitted = structuredClone(people);
+        if (hideFirst() && submitted[0]) {
+          submitted[0].attendee_name = registering ? contact.guest_name : (state.invitation.guest_name || submitted[0].attendee_name);
+          if (state.functions.length === 1 && !(state.functions[0].meal_options || "").trim()) {
+            submitted[0].functions = [{function:state.functions[0].name,attendance:response,meal_choice:""}];
+          }
+        }
         if (response !== "Attending") submitted.forEach(p => p.functions.forEach(f => {f.attendance = response; f.meal_choice = "";}));
         const notes = root.querySelector("#notes").value;
         if (registering) {
@@ -101,7 +115,7 @@ frappe.ready(async () => {
     state = registering ? await api("get_registration", {event:publicEvent}) : await api(staffInvitation ? "staff_invitation" : "get_invitation", staffInvitation ? {invitation: staffInvitation} : {token});
     additionalAnswers = {...(state.additional_answers || {})};
     people = structuredClone(state.attendees);
-    if (!people.length && state.invitation.response_status === "Pending") people.push({attendee_name: state.invitation.guest_name, age_group:"Adult", dietary_requirements:"", accessibility_requests:"", functions:state.functions.map(f => ({function:f.name, attendance:"Attending", meal_choice:""}))});
+    if (!people.length && (state.invitation.response_status === "Pending" || hideFirst())) people.push({attendee_name: state.invitation.guest_name, age_group:"Adult", dietary_requirements:"", accessibility_requests:"", functions:state.functions.map(f => ({function:f.name, attendance:"Attending", meal_choice:""}))});
     render();
   } catch (_) {root.innerHTML = '<div class="rsvp-card"><h1>Invitation unavailable</h1><p>This invitation or public registration may be unavailable or closed. Contact the event organiser for help.</p></div>';}
 });
