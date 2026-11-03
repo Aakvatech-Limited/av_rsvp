@@ -118,6 +118,7 @@ def public_event_details(event):
             "show_dietary_preferences",
             "dietary_options",
             "allow_additional_guests",
+            "hide_first_guest_details",
             "contact_email",
             "contact_phone",
             "privacy_notice",
@@ -134,6 +135,55 @@ def public_event_details(event):
             for key in ["starts_on", "ends_on", "rsvp_deadline"]
         },
     }
+
+
+def primary_contact_person(invitation, functions, people, response):
+    """Use the trusted invitation contact for the hidden first attendee."""
+    if not isinstance(people, list) or any(not isinstance(person, dict) for person in people):
+        frappe.throw("Invalid attendees.")
+    existing = current_rows(
+        "RSVP Attendee",
+        filters={"invitation": invitation.name, "active": 1},
+        fields=["name", "attendee_name", "age_group", "dietary_requirements", "accessibility_requests"],
+        order_by="creation, name",
+    )
+    primary = existing[0] if existing else None
+    person = people[0] if people else {}
+    if person.get("name") and (not primary or person["name"] != primary.name):
+        frappe.throw("The first attendee must be the main contact.", frappe.PermissionError)
+    # Guests cannot replace hidden details through a forged request. Existing
+    # personal details remain stored; new attendees use the invitation contact.
+    for key in ["attendee_name", "age_group", "dietary_requirements", "accessibility_requests"]:
+        person[key] = (
+            primary.get(key)
+            if primary
+            else {"attendee_name": invitation.guest_name, "age_group": "Adult"}.get(key, "")
+        )
+    if primary:
+        person["name"] = primary.name
+    if not person.get("functions"):
+        previous = {
+            row.function: row
+            for row in current_rows(
+                "RSVP Function Response",
+                filters={"attendee": primary.name if primary else ""},
+                fields=["function", "meal_choice"],
+            )
+        }
+        person["functions"] = [
+            dict(
+                function=function.name,
+                attendance=response,
+                meal_choice=(previous.get(function.name, {}).get("meal_choice") or "")
+                if response == "Attending"
+                else "",
+            )
+            for function in functions.values()
+        ]
+    # The overall answer is sufficient for a simple event with no meal choices.
+    if len(functions) == 1 and not (next(iter(functions.values())).meal_options or "").strip():
+        person["functions"] = [dict(function=next(iter(functions)), attendance=response, meal_choice="")]
+    return [person, *people[1:]]
 
 
 def apply_response(
@@ -154,6 +204,8 @@ def apply_response(
     functions = {f.name: f for f in functions_for(event.name)}
     if not functions:
         frappe.throw("No functions are available. Contact the organiser.")
+    if event.hide_first_guest_details:
+        people = primary_contact_person(invitation, functions, people, response)
     try:
         notes = clean_text(notes, 1000)
         validate_people(people, cint(invitation.max_attendees), functions, bool(event.allow_maybe))
@@ -166,7 +218,7 @@ def apply_response(
         if dietary_choices and any(
             p.get("dietary_requirements", "").strip()
             and p["dietary_requirements"].strip() not in dietary_choices
-            for p in people
+            for p in (people[1:] if event.hide_first_guest_details else people)
         ):
             raise ValueError("Choose a dietary preference from the event options, or leave it empty.")
     except (ValueError, TypeError) as error:
