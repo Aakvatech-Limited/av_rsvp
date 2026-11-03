@@ -11,6 +11,7 @@
   "host_name",
   "banner",
   "description",
+  "footer_text",
   "schedule",
   "starts_on",
   "ends_on",
@@ -30,6 +31,7 @@
   "dietary_options",
   "allow_additional_guests",
   "additional_questions",
+  "show_message_to_organizer",
   "form_sections",
   "contact_email",
   "contact_phone",
@@ -71,6 +73,12 @@
    "fieldname": "description",
    "label": "Description",
    "fieldtype": "Text Editor"
+  },
+  {
+   "fieldname": "footer_text",
+   "label": "Footer Text",
+   "fieldtype": "Text Editor",
+   "description": "Optional rich text displayed beneath the RSVP submission button. Links and formatting are supported."
   },
   {
    "fieldname": "schedule",
@@ -214,6 +222,13 @@
    "fieldtype": "Check",
    "default": "0",
    "description": "Use the main contact as the first attendee without asking for Guest 1 details. Turn off Allow Additional Guests as well to hide all guest-entry cards."
+  },
+  {
+   "fieldname": "show_message_to_organizer",
+   "label": "Show Message to Organizer",
+   "fieldtype": "Check",
+   "default": "1",
+   "description": "Show the optional Message to Organiser section on the public RSVP form. Existing messages are retained when hidden."
   },
   {
    "fieldname": "form_sections",
