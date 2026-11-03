@@ -212,10 +212,19 @@ def reverse_checkin(checkin, reason):
 def host_events():
     if "Event Host" not in frappe.get_roles():
         frappe.throw("Event Host role required.", frappe.PermissionError)
-    names = frappe.get_all("RSVP Event Team", filters={"parenttype": "RSVP Event", "user": frappe.session.user, "access_level": "Event Host"}, pluck="parent")
+    names = frappe.get_all(
+        "RSVP Event Team",
+        filters={"parenttype": "RSVP Event", "user": frappe.session.user, "access_level": "Event Host"},
+        pluck="parent",
+    )
     if not names:
         return []
-    return frappe.get_all("RSVP Event", filters={"name": ["in", names]}, fields=["name", "event_title"], order_by="starts_on desc")
+    return frappe.get_all(
+        "RSVP Event",
+        filters={"name": ["in", names]},
+        fields=["name", "event_title"],
+        order_by="starts_on desc",
+    )
 
 
 @frappe.whitelist(methods=["POST"])

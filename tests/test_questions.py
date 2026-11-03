@@ -1,6 +1,13 @@
 import unittest
 
-from av_rsvp.questions import FORM_SECTIONS, choices, hidden_sections, section_order, validate_answers, validate_questions
+from av_rsvp.questions import (
+    FORM_SECTIONS,
+    choices,
+    hidden_sections,
+    section_order,
+    validate_answers,
+    validate_questions,
+)
 
 
 class OptionalQuestions(unittest.TestCase):

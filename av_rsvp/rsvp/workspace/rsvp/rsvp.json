@@ -8,7 +8,7 @@
  "type": "Workspace",
  "public": 1,
  "icon": "calendar",
- "content": "[{\"id\":\"welcome\",\"type\":\"header\",\"data\":{\"text\":\"<b>AV RSVP</b>\",\"col\":12}},{\"id\":\"organizer_dashboard\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Organizer Dashboard\",\"col\":4}},{\"id\":\"quick0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Event Overview\",\"col\":4}},{\"id\":\"quick1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Check-in\",\"col\":4}},{\"id\":\"quick2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Events\",\"col\":4}},{\"id\":\"operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"settings\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
+ "content": "[{\"id\":\"welcome\",\"type\":\"header\",\"data\":{\"text\":\"<b>AV RSVP</b>\",\"col\":12}},{\"id\":\"organizer_dashboard\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Organizer Dashboard\",\"col\":4}},{\"id\":\"quick0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Event Overview\",\"col\":4}},{\"id\":\"quick1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Check-in\",\"col\":4}},{\"id\":\"quick2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Events\",\"col\":4}},{\"id\":\"operations\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"settings\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"id\":\"post_event\",\"type\":\"card\",\"data\":{\"card_name\":\"Post-Event\",\"col\":4}}]",
  "links": [
   {
    "type": "Card Break",
@@ -123,6 +123,28 @@
    "link_type": "DocType",
    "link_to": "RSVP Message Log",
    "is_query_report": 0
+  },
+  {
+   "type": "Card Break",
+   "label": "Post-Event"
+  },
+  {
+   "type": "Link",
+   "label": "Post-Event Dashboard",
+   "link_type": "Page",
+   "link_to": "rsvp-post-event-dashboard"
+  },
+  {
+   "type": "Link",
+   "label": "Host Feedback",
+   "link_type": "DocType",
+   "link_to": "RSVP Event Host Feedback"
+  },
+  {
+   "type": "Link",
+   "label": "Organizer Assessments",
+   "link_type": "DocType",
+   "link_to": "RSVP Event Organizer Assessment"
   }
  ],
  "shortcuts": [

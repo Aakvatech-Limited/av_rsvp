@@ -15,6 +15,29 @@
   },
   {
    "type": "Section Break",
+   "label": "Post-Event",
+   "collapsible": 1
+  },
+  {
+   "type": "Link",
+   "label": "Post-Event Dashboard",
+   "link_type": "Page",
+   "link_to": "rsvp-post-event-dashboard"
+  },
+  {
+   "type": "Link",
+   "label": "Host Feedback",
+   "link_type": "DocType",
+   "link_to": "RSVP Event Host Feedback"
+  },
+  {
+   "type": "Link",
+   "label": "Organizer Assessments",
+   "link_type": "DocType",
+   "link_to": "RSVP Event Organizer Assessment"
+  },
+  {
+   "type": "Section Break",
    "label": "Operations",
    "collapsible": 1
   },

@@ -201,3 +201,63 @@ Paid tickets/ERPNext accounting, automated WhatsApp messaging, seating plans, of
 ## License
 
 MIT
+
+## Post-event dashboard and reviews
+
+Open **Post-Event Dashboard** (`/app/rsvp-post-event-dashboard`) from the RSVP Sidebar,
+Workspace, Event form, or the **Event Host** overview. Filter by event and date range
+(event start on/after From Date and event end on/before To Date). Hosts see only their
+assigned events; managers and coordinators see their eligible events. Check-in operators
+and public guests have no access. Host access does not grant Event document access.
+
+The dashboard reuses **RSVP Function Response** and **RSVP Check-in**; it adds no attendance
+records or duplicate attendance process. Cards, charts and tables are live components on
+this Desk Page, rather than standalone Number Card or Dashboard Chart documents.
+
+- Cards: invitations, invited people allowance, confirmed people, actual attendees,
+  no-shows, attendance rate and submitted host satisfaction (1–5).
+- Charts: invitation responses, confirmed versus attended by function, arrivals by hour,
+  and average host ratings.
+- Tables and review sections: event summary, function attendance, confirmed people without
+  an active check-in, submitted host feedback and published organizer assessments.
+
+An invitation allowance is a maximum number of people, not a count of named invitees.
+People count once per event even if they attend multiple functions. Function places count
+each attendee/function pair. Reversed check-ins are excluded. No-shows are the set of
+confirmed people without an active check-in; attendance rate is confirmed people checked
+in divided by confirmed people. A person attending only some confirmed functions is present
+at event level but may have missing places at function level. Arrival charts count function
+check-ins in the site timezone. Zero confirmations show N/A for attendance rate; missing
+host ratings show **Not received**. Host rating averages include only feedback visible to
+the viewer (hosts see their own; organizers see all eligible event feedback).
+
+Attendance is **provisional** until the event is marked **Completed**. These are live results,
+not a frozen historical report: audited check-in corrections change the results. Completing
+an event follows the existing lifecycle and stops new check-ins; existing reversal actions
+remain available to authorized organizers for corrections.
+
+### Host experience feedback
+
+**RSVP Event Host Feedback** links the event to the existing Frappe User. Only a user with
+both the **Event Host** role and an Event Host team assignment can create or edit their own
+feedback. The server assigns the author and timestamp, and a unique key allows one review
+per host/event. The dashboard's **Host Feedback** button resumes an existing draft or opens
+the submitted record. Ratings cover overall satisfaction, planning/communication and event
+execution; comments capture expectations, successes and improvements. Reviews are available
+after the event ends, and submitted feedback is immutable. Organizers can read feedback but
+cannot rewrite it. Other hosts cannot read another host's review.
+
+### Organizer assessment
+
+**RSVP Event Organizer Assessment** captures objectives achieved, planning, execution,
+issues, successes, lessons and recommendations. Event managers/coordinators with appropriate
+event access can prepare and submit it after the event ends. To share it with hosts,
+submit first, then enable **Published to Host** and save. Hosts have read-only access only
+to submitted, published assessments. Organizers can unpublish an assessment without changing
+its submitted content. Use **Manage Assessments** on the dashboard to open drafts or publish
+submitted records. Standard document change tracking retains review history; deletion and
+cancellation are disabled. Invitee surveys are outside this release.
+
+After updating, run `bench --site your-site migrate`, `bench build --app av_rsvp`, and
+`bench --site your-site clear-cache`. Validate with an assigned host, another host, an
+organizer, an operator, and an unassigned user before enabling it on production.

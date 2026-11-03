@@ -18,3 +18,17 @@ Run on a disposable Frappe v16 site before production use.
 14. Review CSV formula escaping, guest counts versus invitation counts, report exports, privacy notice and operational retention policy.
 
 Lightweight local tests validate business rules, calendar output and metadata without Frappe. Database integration tests are run by the dedicated CI job; a mocked browser check is useful for UI behaviour but does not replace installed-site acceptance or a concurrent-user load test.
+
+## Post-event reviews and reporting
+
+- Open Post-Event Dashboard from an Event, RSVP Sidebar/Workspace and Event Host overview.
+- Check multi-function totals: a person counts once per event, places per function.
+- Reverse a check-in and verify turnout/no-shows update; zero confirmations show N/A.
+- Confirm pre-completion results are provisional; Completed events use current audited data.
+- Assigned host can save/submit their own feedback after event end and resume their draft.
+- Forged host author is overwritten; duplicate host/event feedback is rejected; submitted feedback cannot be edited.
+- Another host cannot list or open that feedback; organizers cannot rewrite it.
+- Organizer assessment is hidden from hosts in Draft and Submitted/unpublished states.
+- Publish a submitted assessment; assigned hosts can read it but cannot edit it. Unpublish removes host access.
+- Unassigned users and check-in operators cannot access analytics or review records.
+- Verify event/date filters and navigation back from feedback; missing ratings say Not received.

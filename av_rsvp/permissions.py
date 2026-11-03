@@ -15,9 +15,16 @@ def host_app_access():
 
 def is_event_host(event, user=None):
     user = user or frappe.session.user
-    return user != "Guest" and "Event Host" in frappe.get_roles(user) and bool(frappe.db.exists("RSVP Event Team", {
-        "parent": event, "parenttype": "RSVP Event", "user": user, "access_level": "Event Host"
-    }))
+    return (
+        user != "Guest"
+        and "Event Host" in frappe.get_roles(user)
+        and bool(
+            frappe.db.exists(
+                "RSVP Event Team",
+                {"parent": event, "parenttype": "RSVP Event", "user": user, "access_level": "Event Host"},
+            )
+        )
+    )
 
 
 def require_overview(event):

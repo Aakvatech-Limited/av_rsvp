@@ -10,7 +10,17 @@ fixtures = [
     {
         "dt": "Role",
         "filters": [
-            ["name", "in", ["RSVP Administrator", "Event Manager", "Event Coordinator", "Check-in Operator", "Event Host"]]
+            [
+                "name",
+                "in",
+                [
+                    "RSVP Administrator",
+                    "Event Manager",
+                    "Event Coordinator",
+                    "Check-in Operator",
+                    "Event Host",
+                ],
+            ]
         ],
     }
 ]
@@ -61,3 +71,16 @@ has_permission = {
         "RSVP Message Log",
     ]
 }
+
+permission_query_conditions.update(
+    {
+        "RSVP Event Host Feedback": "av_rsvp.post_event_feedback.host_query",
+        "RSVP Event Organizer Assessment": "av_rsvp.post_event_feedback.assessment_query",
+    }
+)
+has_permission.update(
+    {
+        dt: "av_rsvp.post_event_feedback.document_access"
+        for dt in ["RSVP Event Host Feedback", "RSVP Event Organizer Assessment"]
+    }
+)

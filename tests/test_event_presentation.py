@@ -15,7 +15,9 @@ class EventPresentation(unittest.TestCase):
         data = json.loads((ROOT / "rsvp/doctype/rsvp_event/rsvp_event.json").read_text())
         fields = {item["fieldname"]: item for item in data["fields"]}
         self.assertNotIn("show_message_to_organizer", fields)
-        form_section = json.loads((ROOT / "rsvp/doctype/rsvp_form_section/rsvp_form_section.json").read_text())
+        form_section = json.loads(
+            (ROOT / "rsvp/doctype/rsvp_form_section/rsvp_form_section.json").read_text()
+        )
         self.assertIn("hide", [field["fieldname"] for field in form_section["fields"]])
         self.assertEqual(fields["footer_text"]["fieldtype"], "Text Editor")
 
@@ -25,11 +27,11 @@ class EventPresentation(unittest.TestCase):
         self.assertIn('"Message to Organiser" not in hidden_sections(event.form_sections)', source)
 
     def test_confirmation_attachment_is_conditioned_on_confirmed_attendance(self):
-        source = (ROOT / "messaging.py").read_text()
+        source = " ".join((ROOT / "messaging.py").read_text().split())
         self.assertIn('log.purpose == "Confirmation" and invitation.response_status == "Attending"', source)
         self.assertIn('r.allocation == "Confirmed"', source)
         self.assertIn('"fname": "event-invitation.ics"', source)
-        self.assertIn('attachments=attachments', source)
+        self.assertIn("attachments=attachments", source)
 
     def test_calendar_is_standard_utc_ics(self):
         class Event:
@@ -41,12 +43,12 @@ class EventPresentation(unittest.TestCase):
             venue = "Dar es Salaam"
 
         content = calendar_content(Event(), source_timezone="Africa/Dar_es_Salaam")
-        self.assertIn("BEGIN:VCALENDAR\\r\\n", content)
-        self.assertIn("BEGIN:VEVENT\\r\\n", content)
+        self.assertIn("BEGIN:VCALENDAR\r\n", content)
+        self.assertIn("BEGIN:VEVENT\r\n", content)
         self.assertIn("DTSTART:20261110T150000Z", content)
         self.assertIn("DTEND:20261110T180000Z", content)
         self.assertIn("SUMMARY:Dinner & Reception", content)
-        self.assertTrue(content.endswith("END:VCALENDAR\\r\\n"))
+        self.assertTrue(content.endswith("END:VCALENDAR\r\n"))
 
 
 if __name__ == "__main__":

@@ -587,6 +587,107 @@ class TestRSVP(IntegrationTestCase):
         self.assertEqual(frappe.db.count("RSVP Guest"), before)
         self.assertEqual(frappe.db.count("RSVP Invitation", {"event": self.event.name}), 1)
 
+    def test_post_event_dashboard_reuses_checkins_and_respects_host_assignment(self):
+        from av_rsvp.post_event import dashboard
+
+        result = apply_response(self.invitation.name, "Attending", self.people())
+        attendee = result["attendees"][0].name
+        check_in(self.function.name, attendee)
+        data = dashboard(self.event.name)
+        self.assertEqual(data["totals"]["attended_people"], 1)
+        self.assertEqual(data["totals"]["no_shows"], 0)
+        self.assertIsNone(data["totals"]["host_satisfaction"])
+        checkin = frappe.db.get_value("RSVP Check-in", {"attendee": attendee})
+        api.reverse_checkin(checkin, "Incorrect scan")
+        self.assertEqual(dashboard(self.event.name)["totals"]["no_shows"], 1)
+        host = self.make_review_user("Event Host")
+        frappe.set_user(host)
+        self.assertEqual(dashboard()["events"], [])
+        with self.assertRaises(frappe.PermissionError):
+            dashboard(self.event.name)
+        frappe.set_user("Administrator")
+        self.event.append("team", dict(user=host, access_level="Event Host"))
+        self.event.save()
+        frappe.set_user(host)
+        data = dashboard(self.event.name)
+        self.assertEqual(data["totals"]["no_shows"], 1)
+        self.assertNotIn("email", str(data))
+        self.assertFalse(frappe.has_permission("RSVP Event", "read", self.event))
+
+    def make_review_user(self, role):
+        user = frappe.get_doc(
+            dict(
+                doctype="User",
+                email=f"review-{frappe.generate_hash(length=10)}@example.com",
+                first_name="Event Reviewer",
+                send_welcome_email=0,
+                roles=[dict(role=role)],
+            )
+        ).insert()
+        return user.name
+
+    def test_post_event_review_author_publication_and_document_permissions(self):
+        from av_rsvp.post_event import ASSESSMENT, HOST_FEEDBACK, dashboard
+
+        host = self.make_review_user("Event Host")
+        other = self.make_review_user("Event Host")
+        for user in (host, other):
+            self.event.append("team", dict(user=user, access_level="Event Host"))
+        self.event.save()
+        # End the event without rewriting programme dates; no operational records are changed.
+        frappe.db.set_value(
+            "RSVP Event",
+            self.event.name,
+            {
+                "starts_on": now_datetime() - timedelta(days=2),
+                "ends_on": now_datetime() - timedelta(days=1),
+                "rsvp_deadline": now_datetime() - timedelta(days=3),
+                "status": "Completed",
+            },
+        )
+        assessment = frappe.get_doc(
+            dict(
+                doctype=ASSESSMENT,
+                event=self.event.name,
+                objectives_achieved="Fully",
+                recommendations="Repeat next year",
+            )
+        ).insert()
+        assessment.submit()
+        frappe.set_user(host)
+        self.assertEqual(dashboard(self.event.name)["assessments"], [])
+        self.assertFalse(frappe.has_permission(ASSESSMENT, "read", assessment))
+        review = frappe.get_doc(
+            dict(
+                doctype=HOST_FEEDBACK,
+                event=self.event.name,
+                host_user=other,
+                overall_satisfaction="5",
+                planning_rating="4",
+                execution_rating="5",
+                expectations_met="Fully",
+            )
+        ).insert()
+        self.assertEqual(review.host_user, host)
+        review.submit()
+        self.assertEqual(dashboard(self.event.name)["totals"]["host_satisfaction"], 5)
+        frappe.set_user(other)
+        self.assertFalse(frappe.has_permission(HOST_FEEDBACK, "read", review))
+        self.assertEqual(frappe.get_list(HOST_FEEDBACK, filters={"event": self.event.name}), [])
+        frappe.set_user("Administrator")
+        assessment.reload()
+        assessment.published = 1
+        assessment.save()
+        frappe.set_user(host)
+        self.assertEqual(len(dashboard(self.event.name)["assessments"]), 1)
+        self.assertTrue(frappe.has_permission(ASSESSMENT, "read", assessment))
+        self.assertFalse(frappe.has_permission(ASSESSMENT, "write", assessment))
+        frappe.set_user("Administrator")
+        with self.assertRaises(frappe.PermissionError):
+            review.reload()
+            review.comments = "Organizer rewriting host feedback"
+            review.save(ignore_permissions=True)
+
 
 class TestConcurrentCapacity(IntegrationTestCase):
     def test_last_place_cannot_be_confirmed_twice(self):
