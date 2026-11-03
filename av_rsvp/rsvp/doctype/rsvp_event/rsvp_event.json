@@ -19,6 +19,8 @@
   "venue",
   "map_url",
   "registration",
+  "allow_public_registration",
+  "public_max_attendees",
   "multiple_functions",
   "allow_maybe",
   "enable_waitlist",
@@ -147,6 +149,21 @@
    "fieldname": "privacy_notice",
    "label": "Privacy Notice",
    "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "allow_public_registration",
+   "label": "Allow Public Registration",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Anyone with the event registration link can register without an account."
+  },
+  {
+   "fieldname": "public_max_attendees",
+   "label": "People per Public Registration",
+   "fieldtype": "Int",
+   "default": "1",
+   "depends_on": "eval:doc.allow_public_registration",
+   "description": "Includes the primary guest. Between 1 and 100."
   }
  ],
  "permissions": [

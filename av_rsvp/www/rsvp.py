@@ -9,7 +9,7 @@ def get_context(context):
     context.no_header = 1
     context.no_footer = 1
     context.brand_name = frappe.db.get_single_value("RSVP Settings", "brand_name") or "AV RSVP"
-    context.title = "Your invitation | AV RSVP"
+    context.title = "Event RSVP | AV RSVP"
     frappe.local.response_headers.update(
         {
             "Cache-Control": "no-store, private",

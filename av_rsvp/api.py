@@ -116,6 +116,7 @@ def revoke_invitation(invitation):
         frappe.throw("Reverse attendee check-ins before revoking this invitation.")
     with service_write():
         doc = current_doc("RSVP Invitation", invitation)
+        doc.registration_key = None
         doc.revoked = 1
         doc.save(ignore_permissions=True)
         for name in current_rows("RSVP Function Response", filters={"invitation": doc.name}, pluck="name"):
@@ -134,6 +135,7 @@ def renew_invitation(invitation):
     lock_event(doc.event)
     with service_write():
         doc = current_doc("RSVP Invitation", invitation)
+        doc.registration_key = None
         doc.access_nonce = new_nonce()
         doc.token_hash = digest(token_for(doc.access_nonce, "invitation"))
         doc.revoked = 0
@@ -361,3 +363,114 @@ def calendar(token):
         "filename": "event.ics",
         "content": calendar_content(event, source_timezone=get_system_timezone()),
     }
+
+
+def public_registration_event(event):
+    """Explicit opt-in; do not disclose draft or invitation-only events."""
+    from frappe.utils import get_datetime
+
+    lock_event(event)
+    doc = current_doc("RSVP Event", event)
+    if (
+        not doc.allow_public_registration
+        or doc.status != "Published"
+        or now_datetime() > get_datetime(doc.rsvp_deadline)
+    ):
+        frappe.throw(
+            "Public registration is unavailable or closed. Contact the organiser.", frappe.PermissionError
+        )
+    return doc
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=60, seconds=60)
+@retry_transaction
+def get_registration(event):
+    from av_rsvp.security import display_datetime
+    from av_rsvp.services import public_event_details
+
+    private_response()
+    doc = public_registration_event(event)
+    functions = functions_for(doc.name)
+    if not functions:
+        frappe.throw("No functions are available. Contact the organiser.")
+    for function in functions:
+        for key in ["starts_on", "ends_on"]:
+            function[key] = display_datetime(function[key], doc.timezone)
+    return dict(
+        event=public_event_details(doc),
+        invitation=dict(guest_name="", max_attendees=doc.public_max_attendees, response_status="Pending"),
+        functions=functions,
+        attendees=[],
+        editable=True,
+    )
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=10, seconds=60)
+@retry_transaction
+def register(
+    event, guest_name, email, registration_key, response, people, phone="", organisation="", notes=""
+):
+    """Create guest + booking + response atomically, with a client-generated retry secret.
+
+    Contact details are unverified: never use them to return or alter an existing
+    guest/invitation. Only the random retry secret can recover this submission.
+    """
+    import re
+
+    from frappe.utils import validate_email_address
+
+    from av_rsvp.domain import clean_text
+
+    private_response()
+    doc = public_registration_event(event)
+    if not isinstance(registration_key, str) or not re.fullmatch(r"[a-f0-9]{64}", registration_key):
+        frappe.throw("Invalid registration request. Reload the page and try again.")
+    key = digest(f"{doc.name}:{registration_key}")
+    existing = current_value("RSVP Invitation", {"event": doc.name, "registration_key": key})
+    if existing:
+        invitation = current_doc("RSVP Invitation", existing)
+        token = token_for(invitation.access_nonce, "invitation")
+        invitation, event_doc = check_token(token)
+        return dict(token=token, registration=snapshot(invitation, event_doc))
+    try:
+        guest_name = clean_text(guest_name)
+        email = clean_text(email).lower()
+        phone = clean_text(phone)
+        organisation = clean_text(organisation)
+    except ValueError as error:
+        frappe.throw(str(error))
+    if not guest_name or not email or validate_email_address(email) != email:
+        frappe.throw("Enter your full name and a valid email address.")
+    # A real HTTP POST rolls the entire request back on validation/capacity errors.
+    with service_write():
+        guest = frappe.get_doc(
+            dict(
+                doctype="RSVP Guest",
+                guest_name=guest_name,
+                email=email,
+                phone=phone,
+                organisation=organisation,
+            )
+        ).insert(ignore_permissions=True)
+        invitation = frappe.get_doc(
+            dict(
+                doctype="RSVP Invitation",
+                event=doc.name,
+                guest=guest.name,
+                guest_name=guest_name,
+                email=email,
+                phone=phone,
+                max_attendees=doc.public_max_attendees,
+                registration_key=key,
+            )
+        ).insert(ignore_permissions=True)
+        result = apply_response(
+            invitation.name,
+            response,
+            deepcopy(frappe.parse_json(people)),
+            notes,
+            actor="Guest via public registration",
+        )
+    return dict(token=token_for(invitation.access_nonce, "invitation"), registration=result)

@@ -23,7 +23,8 @@
   "access_nonce",
   "token_hash",
   "token_expires_on",
-  "invite_key"
+  "invite_key",
+  "registration_key"
  ],
  "fields": [
   {
@@ -156,6 +157,15 @@
    "hidden": 1,
    "read_only": 1,
    "unique": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "registration_key",
+   "label": "Public Registration Key",
+   "fieldtype": "Data",
+   "unique": 1,
+   "hidden": 1,
+   "read_only": 1,
    "permlevel": 2
   }
  ],

@@ -37,6 +37,8 @@ class RSVPEventBase(Document):
             frappe.throw("Event end must follow its start.")
         if get_datetime(self.rsvp_deadline) > get_datetime(self.ends_on):
             frappe.throw("The RSVP deadline must not follow the event end.")
+        if self.allow_public_registration and not 1 <= cint(self.public_max_attendees) <= 100:
+            frappe.throw("People per public registration must be between 1 and 100.")
         if self.map_url and not self.map_url.startswith("https://"):
             frappe.throw("The map link must use HTTPS.")
         if len({row.user for row in self.team}) != len(self.team):
@@ -140,6 +142,8 @@ class RSVPInvitationBase(Document):
         if not 1 <= cint(self.max_attendees) <= 100:
             frappe.throw("An invitation must allow between 1 and 100 people.")
         if self.is_new():
+            if not frappe.flags.av_rsvp_service:
+                self.registration_key = None
             self.invite_key = digest(f"{self.event}:{self.guest}")
             self.access_nonce = new_nonce()
             self.token_hash = digest(token_for(self.access_nonce, "invitation"))
@@ -157,6 +161,7 @@ class RSVPInvitationBase(Document):
                 "token_hash",
                 "token_expires_on",
                 "invite_key",
+                "registration_key",
                 "response_status",
                 "delivery_status",
                 "responded_on",

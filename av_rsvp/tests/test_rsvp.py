@@ -255,6 +255,107 @@ class TestRSVP(IntegrationTestCase):
         )
         self.assertIn("DTSTART:" + expected_utc.strftime("%Y%m%dT%H%M%SZ"), calendar["content"])
 
+    def open_registration(self):
+        self.event.allow_public_registration = 1
+        self.event.public_max_attendees = 2
+        self.event.save()
+
+    def registration(self, key="a" * 64, **overrides):
+        args = dict(
+            event=self.event.name,
+            guest_name="Public guest",
+            email="public@example.com",
+            registration_key=key,
+            response="Attending",
+            people=self.people("Public guest"),
+        )
+        args.update(overrides)
+        return api.register(**args)
+
+    def test_public_guest_registers_without_account_and_retries(self):
+        self.open_registration()
+        frappe.set_user("Guest")
+        public = api.get_registration(self.event.name)
+        self.assertNotIn("team", public["event"])
+        self.assertEqual(public["attendees"], [])
+        first = self.registration()
+        second = self.registration()
+        self.assertEqual(first["token"], second["token"])
+        self.assertEqual(
+            first["registration"]["attendees"][0].name, second["registration"]["attendees"][0].name
+        )
+        invitation, _ = check_token(first["token"])
+        guest = frappe.get_doc("RSVP Guest", invitation.guest)
+        self.assertEqual(guest.guest_name, "Public guest")
+        self.assertEqual(invitation.response_status, "Attending")
+        self.assertEqual(invitation.response_by, "Guest via public registration")
+        self.assertEqual(frappe.db.count("RSVP Invitation", {"event": self.event.name}), 2)
+        self.assertTrue(first["registration"]["attendees"][0].entry_token)
+        self.assertFalse(frappe.db.exists("User", "public@example.com"))
+
+    def test_public_registration_is_opt_in_and_respects_closure(self):
+        frappe.set_user("Guest")
+        with self.assertRaises(frappe.PermissionError):
+            api.get_registration(self.event.name)
+        with self.assertRaises(frappe.PermissionError):
+            self.registration()
+        frappe.set_user("Administrator")
+        self.open_registration()
+        for status in ["Draft", "Registration Closed", "Completed", "Cancelled"]:
+            frappe.db.set_value("RSVP Event", self.event.name, "status", status)
+            with self.assertRaises(frappe.PermissionError):
+                self.registration()
+        frappe.db.set_value("RSVP Event", self.event.name, "status", "Published")
+        frappe.db.set_value(
+            "RSVP Event", self.event.name, "rsvp_deadline", now_datetime() - timedelta(days=1)
+        )
+        with self.assertRaises(frappe.PermissionError):
+            self.registration()
+
+    def test_public_registration_contact_does_not_grant_existing_access(self):
+        self.open_registration()
+        first = self.registration()
+        second = self.registration(key="b" * 64)
+        self.assertNotEqual(first["token"], second["token"])
+        a, _ = check_token(first["token"])
+        b, _ = check_token(second["token"])
+        self.assertNotEqual(a.guest, b.guest)
+        self.assertEqual(second["registration"]["attendees"][0].functions[0]["allocation"], "Waitlisted")
+        api.revoke_invitation(a.name)
+        self.assertFalse(frappe.db.get_value("RSVP Invitation", a.name, "registration_key"))
+        with self.assertRaises(frappe.PermissionError):
+            api.get_invitation(first["token"])
+
+    def test_public_registration_rejects_invalid_payload_without_orphans(self):
+        self.open_registration()
+        for overrides in [
+            dict(guest_name=""),
+            dict(email="invalid"),
+            dict(registration_key="guess"),
+            dict(people=self.people() * 3),
+            dict(people=self.people(attendee="foreign")),
+        ]:
+            frappe.db.savepoint("public_invalid")
+            before = frappe.db.count("RSVP Guest")
+            with self.assertRaises((frappe.ValidationError, frappe.PermissionError)):
+                self.registration(**overrides)
+            frappe.db.rollback(save_point="public_invalid")
+            self.assertEqual(frappe.db.count("RSVP Guest"), before)
+            self.assertEqual(frappe.db.count("RSVP Invitation", {"event": self.event.name}), 1)
+
+    def test_public_registration_capacity_failure_rolls_back_guest_and_invitation(self):
+        self.open_registration()
+        self.event.enable_waitlist = 0
+        self.event.save()
+        apply_response(self.invitation.name, "Attending", self.people())
+        before = frappe.db.count("RSVP Guest")
+        frappe.db.savepoint("public_capacity")
+        with self.assertRaises(frappe.ValidationError):
+            self.registration()
+        frappe.db.rollback(save_point="public_capacity")
+        self.assertEqual(frappe.db.count("RSVP Guest"), before)
+        self.assertEqual(frappe.db.count("RSVP Invitation", {"event": self.event.name}), 1)
+
 
 class TestConcurrentCapacity(IntegrationTestCase):
     def test_last_place_cannot_be_confirmed_twice(self):
