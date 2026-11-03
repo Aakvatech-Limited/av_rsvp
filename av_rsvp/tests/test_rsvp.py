@@ -272,6 +272,26 @@ class TestRSVP(IntegrationTestCase):
         args.update(overrides)
         return api.register(**args)
 
+    def test_event_registration_qr_is_public_link_png_and_event_scoped(self):
+        import base64
+        from urllib.parse import parse_qs, urlparse
+
+        self.open_registration()
+        result = api.event_registration_qr(self.event.name)
+        self.assertEqual(parse_qs(urlparse(result["url"]).query), {"event": [self.event.name]})
+        self.assertEqual(urlparse(result["url"]).path, "/rsvp")
+        self.assertFalse(urlparse(result["url"]).fragment)
+        self.assertTrue(result["image"].startswith("data:image/png;base64,"))
+        self.assertTrue(base64.b64decode(result["image"].split(",", 1)[1]).startswith(b"\x89PNG\r\n\x1a\n"))
+        frappe.set_user("Guest")
+        with self.assertRaises(frappe.PermissionError):
+            api.event_registration_qr(self.event.name)
+        frappe.set_user("Administrator")
+        self.event.allow_public_registration = 0
+        self.event.save()
+        with self.assertRaises(frappe.PermissionError):
+            api.event_registration_qr(self.event.name)
+
     def test_public_guest_registers_without_account_and_retries(self):
         self.open_registration()
         frappe.set_user("Guest")
