@@ -43,7 +43,7 @@ def get_invitation(token):
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=20, seconds=60)
 @retry_transaction
-def respond(token, response, people, notes=""):
+def respond(token, response, people, notes="", additional_answers=None):
     private_response()
     invitation, _event = check_token(token)
     return apply_response(
@@ -53,6 +53,7 @@ def respond(token, response, people, notes=""):
         notes,
         actor="Guest via private invitation",
         expected_token_hash=digest(token),
+        additional_answers=additional_answers,
     )
 
 
@@ -67,10 +68,12 @@ def staff_invitation(invitation):
 
 @frappe.whitelist(methods=["POST"])
 @retry_transaction
-def record_response(invitation, response, people, notes=""):
+def record_response(invitation, response, people, notes="", additional_answers=None):
     doc = frappe.get_doc("RSVP Invitation", invitation)
     require_event(doc.event)
-    return apply_response(doc.name, response, deepcopy(frappe.parse_json(people)), notes)
+    return apply_response(
+        doc.name, response, deepcopy(frappe.parse_json(people)), notes, additional_answers=additional_answers
+    )
 
 
 @frappe.whitelist(methods=["POST"])
@@ -399,9 +402,14 @@ def get_registration(event):
             function[key] = display_datetime(function[key], doc.timezone)
     return dict(
         event=public_event_details(doc),
-        invitation=dict(guest_name="", max_attendees=doc.public_max_attendees, response_status="Pending"),
+        invitation=dict(
+            guest_name="",
+            max_attendees=doc.public_max_attendees if doc.allow_additional_guests else 1,
+            response_status="Pending",
+        ),
         functions=functions,
         attendees=[],
+        additional_answers={},
         editable=True,
     )
 
@@ -410,7 +418,16 @@ def get_registration(event):
 @rate_limit(limit=10, seconds=60)
 @retry_transaction
 def register(
-    event, guest_name, email, registration_key, response, people, phone="", organisation="", notes=""
+    event,
+    guest_name,
+    email,
+    registration_key,
+    response,
+    people,
+    phone="",
+    organisation="",
+    notes="",
+    additional_answers=None,
 ):
     """Create guest + booking + response atomically, with a client-generated retry secret.
 
@@ -462,7 +479,7 @@ def register(
                 guest_name=guest_name,
                 email=email,
                 phone=phone,
-                max_attendees=doc.public_max_attendees,
+                max_attendees=doc.public_max_attendees if doc.allow_additional_guests else 1,
                 registration_key=key,
             )
         ).insert(ignore_permissions=True)
@@ -472,6 +489,7 @@ def register(
             deepcopy(frappe.parse_json(people)),
             notes,
             actor="Guest via public registration",
+            additional_answers=additional_answers,
         )
     return dict(token=token_for(invitation.access_nonce, "invitation"), registration=result)
 

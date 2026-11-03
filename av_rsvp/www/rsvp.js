@@ -8,7 +8,9 @@ frappe.ready(async () => {
   const retryKey = registering ? Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, "0")).join("") : "";
   const contact = {guest_name:"", email:"", phone:"", organisation:""};
   const esc = value => frappe.utils.escape_html(String(value ?? ""));
-  let state, people = [];
+  let state, people = [], additionalAnswers = {};
+  const allowExtra = () => state.event.allow_additional_guests !== 0 && state.event.allow_additional_guests !== false;
+  const showDiet = () => state.event.show_dietary_preferences !== 0 && state.event.show_dietary_preferences !== false;
   const api = async (method, args) => (await frappe.call({method: `av_rsvp.api.${method}`, args, type: "POST"})).message;
   const date = value => value ? new Date(value.replace(" ", "T")).toLocaleString(undefined, {dateStyle: "medium", timeStyle: "short"}) : "";
   function error(message) {
@@ -19,6 +21,7 @@ frappe.ready(async () => {
     root.prepend(box);
   }
   function capture() {
+    for (const input of root.querySelectorAll("[data-question]")) additionalAnswers[input.dataset.question] = input.type === "checkbox" ? (input.checked ? "1" : "0") : input.value;
     for (const input of root.querySelectorAll("[data-contact]")) contact[input.dataset.contact] = input.value;
     for (const card of root.querySelectorAll("[data-person]")) {
       const person = people[Number(card.dataset.person)];
@@ -32,14 +35,27 @@ frappe.ready(async () => {
   }
   function option(value, selected) { return `<option value="${esc(value)}" ${value === selected ? "selected" : ""}>${esc(value)}</option>`; }
   function personCard(person, index) {
-    return `<section class="rsvp-card" data-person="${index}"><button type="button" class="remove" data-remove="${index}">Remove</button><h2>Guest ${index + 1}</h2>
+    return `<section class="rsvp-card" data-person="${index}">${index > 0 ? `<button type="button" class="remove" data-remove="${index}">Remove</button>` : ""}<h2>Guest ${index + 1}</h2>
       <label class="rsvp-label" for="name-${index}">Full name</label><input id="name-${index}" data-field="attendee_name" value="${esc(person.attendee_name)}" required maxlength="140" autocomplete="name">
       <label class="rsvp-label" for="age-${index}">Guest category</label><select id="age-${index}" data-field="age_group">${["Adult", "Child"].map(v => option(v, person.age_group)).join("")}</select>
-      <div class="rsvp-row"><div><label class="rsvp-label" for="diet-${index}">Dietary requirements</label><textarea id="diet-${index}" data-field="dietary_requirements" maxlength="1000">${esc(person.dietary_requirements)}</textarea></div>
+      <div class="rsvp-row">${showDiet() ? `<div><label class="rsvp-label" for="diet-${index}">Dietary preference (optional)</label>${(state.event.dietary_options || "").trim() ? `<select id="diet-${index}" data-field="dietary_requirements">${option("", person.dietary_requirements)}${state.event.dietary_options.split(/\r?\n/).map(v=>v.trim()).filter(Boolean).map(v=>option(v,person.dietary_requirements)).join("")}</select>` : `<textarea id="diet-${index}" data-field="dietary_requirements" maxlength="1000">${esc(person.dietary_requirements)}</textarea>`}</div>` : ""}
       <div><label class="rsvp-label" for="access-${index}">Accessibility requests</label><textarea id="access-${index}" data-field="accessibility_requests" maxlength="1000">${esc(person.accessibility_requests)}</textarea></div></div>
       ${state.functions.map((f, fi) => { const answer = person.functions.find(a => a.function === f.name); const meals = (f.meal_options || "").split("\n").map(s => s.trim()).filter(Boolean); return `<div class="rsvp-function" data-function="${esc(f.name)}"><strong>${esc(f.function_title)}</strong><p class="rsvp-muted">${esc(date(f.starts_on))} · ${esc(f.venue || state.event.venue)}</p>
       <label class="rsvp-label" for="attendance-${index}-${fi}">Attendance</label><select id="attendance-${index}-${fi}" data-attendance>${["Attending", "Declined", ...(state.event.allow_maybe ? ["Maybe"] : [])].map(v => option(v, answer.attendance)).join("")}</select>
       ${meals.length ? `<label class="rsvp-label" for="meal-${index}-${fi}">Meal choice</label><select id="meal-${index}-${fi}" data-meal>${option("", answer.meal_choice)}${meals.map(v => option(v, answer.meal_choice)).join("")}</select>` : ""}</div>`; }).join("")}</section>`;
+  }
+  function questionFields() {
+    const questions = state.event.additional_questions || [];
+    if (!questions.length) return "";
+    return `<section class="rsvp-card"><h2>Additional questions (optional)</h2>${questions.map(q => {
+      const value = additionalAnswers[q.question_key] || "";
+      const attrs = `id="question-${esc(q.question_key)}" data-question="${esc(q.question_key)}"`;
+      const label = `<label class="rsvp-label" for="question-${esc(q.question_key)}">${esc(q.question_label)} (optional)</label>`;
+      if (q.question_type === "Check") return `${label}<input ${attrs} type="checkbox" style="width:auto" ${value === "1" ? "checked" : ""}>`;
+      if (q.question_type === "Select") return `${label}<select ${attrs}>${option("", value)}${(q.options || "").split(/\r?\n/).map(v=>v.trim()).filter(Boolean).map(v=>option(v,value)).join("")}</select>`;
+      if (q.question_type === "Long Text") return `${label}<textarea ${attrs} maxlength="1000">${esc(value)}</textarea>`;
+      return `${label}<input ${attrs} type="text" maxlength="140" value="${esc(value)}">`;
+    }).join("")}</section>`;
   }
   function render(saved = false) {
     const e = state.event;
@@ -48,8 +64,8 @@ frappe.ready(async () => {
       <p class="rsvp-muted">Please respond by ${esc(date(e.rsvp_deadline))}. ${registering ? "Each registration allows" : "Your invitation allows"} ${esc(state.invitation.max_attendees)} people, including you.</p>${staffInvitation ? '<div class="rsvp-notice">Organiser entry: this response will record your signed-in user.</div>' : ""}</section>
       ${saved ? '<div class="rsvp-notice" role="status">Your response has been saved. Check each function’s confirmation status below.</div>' : ""}
       ${!state.editable ? '<div class="rsvp-notice">Online responses are closed. Contact the organiser for changes.</div>' : ""}
-      ${state.editable ? `<form id="response-form">${registering ? `<section class="rsvp-card"><h2>Your contact details</h2>${[["guest_name","Full name","text","name"],["email","Email address","email","email"],["phone","Phone number","tel","tel"],["organisation","Organisation","text","organization"]].map(([key,label,type,autocomplete]) => `<label class="rsvp-label" for="contact-${key}">${label}</label><input id="contact-${key}" data-contact="${key}" type="${type}" autocomplete="${autocomplete}" value="${esc(contact[key])}" maxlength="140" ${["guest_name","email"].includes(key) ? "required" : ""}>`).join("")}</section>` : ""}<section class="rsvp-card"><h2>Your response</h2><label class="rsvp-label" for="overall">Will you be joining us?</label><select id="overall">${["Attending", "Declined", ...(e.allow_maybe ? ["Maybe"] : [])].map(v => option(v, state.invitation.response_status === "Pending" ? "Attending" : state.invitation.response_status)).join("")}</select></section><div id="people">${people.map(personCard).join("")}</div>
-      <section class="rsvp-card"><button type="button" class="secondary" id="add-person" ${people.length >= state.invitation.max_attendees ? "disabled" : ""}>+ Add guest</button><label class="rsvp-label" for="notes">Message to the organiser</label><textarea id="notes" maxlength="1000">${esc(state.notes || "")}</textarea><p class="rsvp-muted rsvp-multiline">${esc(e.privacy_notice || "Your information is used to organise this event. Share only the details needed for your attendance.")}</p><div class="rsvp-actions"><button type="submit" id="save-response">${registering ? "Register and save RSVP" : "Save response"}</button></div></section></form>` : ""}
+      ${state.editable ? `<form id="response-form">${registering ? `<section class="rsvp-card"><h2>Your contact details</h2>${[["guest_name","Full name","text","name"],["email","Email address","email","email"],["phone","Phone number","tel","tel"],["organisation","Organisation","text","organization"]].map(([key,label,type,autocomplete]) => `<label class="rsvp-label" for="contact-${key}">${label}</label><input id="contact-${key}" data-contact="${key}" type="${type}" autocomplete="${autocomplete}" value="${esc(contact[key])}" maxlength="140" ${["guest_name","email"].includes(key) ? "required" : ""}>`).join("")}</section>` : ""}<section class="rsvp-card"><h2>Your response</h2><label class="rsvp-label" for="overall">Will you be joining us?</label><select id="overall">${["Attending", "Declined", ...(e.allow_maybe ? ["Maybe"] : [])].map(v => option(v, state.invitation.response_status === "Pending" ? "Attending" : state.invitation.response_status)).join("")}</select></section><div id="people">${people.map(personCard).join("")}</div>${questionFields()}
+      <section class="rsvp-card">${allowExtra() ? `<button type="button" class="secondary" id="add-person" ${people.length >= state.invitation.max_attendees ? "disabled" : ""}>+ Add guest</button>` : ""}<label class="rsvp-label" for="notes">Message to the organiser</label><textarea id="notes" maxlength="1000">${esc(state.notes || "")}</textarea><p class="rsvp-muted rsvp-multiline">${esc(e.privacy_notice || "Your information is used to organise this event. Share only the details needed for your attendance.")}</p><div class="rsvp-actions"><button type="submit" id="save-response">${registering ? "Register and save RSVP" : "Save response"}</button></div></section></form>` : ""}
       ${state.attendees.length ? `<section class="rsvp-card"><h2>Your attendance details</h2>${state.attendees.map(p => `<div class="rsvp-pass">${p.entry_qr ? `<img src="${p.entry_qr}" alt="Entry QR code for ${esc(p.attendee_name)}">` : ""}<div><strong>${esc(p.attendee_name)}</strong>${p.functions.map(a => `<div>${esc(state.functions.find(f => f.name === a.function)?.function_title || "")} <span class="rsvp-badge">${esc(a.allocation)}</span></div>`).join("")}${p.entry_token ? '<small>Present this pass at the event.</small>' : ""}</div></div>`).join("")}<div class="rsvp-actions"><button type="button" class="secondary" id="print-passes">Print passes</button>${token ? '<button type="button" class="secondary" id="calendar">Add to calendar</button>' : ""}</div></section>` : ""}
       <p class="rsvp-muted">${esc(e.contact_email || "")} ${esc(e.contact_phone || "")}</p>`;
     root.querySelector("#add-person")?.addEventListener("click", () => {
@@ -65,14 +81,15 @@ frappe.ready(async () => {
         if (response !== "Attending") submitted.forEach(p => p.functions.forEach(f => {f.attendance = response; f.meal_choice = "";}));
         const notes = root.querySelector("#notes").value;
         if (registering) {
-          const result = await api("register", {event:publicEvent, ...contact, registration_key:retryKey, response, people:JSON.stringify(submitted), notes});
+          const result = await api("register", {event:publicEvent, ...contact, registration_key:retryKey, response, people:JSON.stringify(submitted), notes, additional_answers:JSON.stringify(additionalAnswers)});
           token = result.token;
           state = result.registration;
           registering = false;
           window.history.replaceState(null, "", `/rsvp#${token}`);
         } else {
-          state = await api(staffInvitation ? "record_response" : "respond", {...(staffInvitation ? {invitation: staffInvitation} : {token}), response, people: JSON.stringify(submitted), notes});
+          state = await api(staffInvitation ? "record_response" : "respond", {...(staffInvitation ? {invitation: staffInvitation} : {token}), response, people: JSON.stringify(submitted), notes, additional_answers:JSON.stringify(additionalAnswers)});
         }
+        additionalAnswers = {...(state.additional_answers || {})};
         people = structuredClone(state.attendees); render(true);
       } catch (_) {error("Your response could not be saved. Review the message shown and try again."); button.disabled = false;}
     });
@@ -82,6 +99,7 @@ frappe.ready(async () => {
   try {
     if (!token && !staffInvitation && !publicEvent) {root.innerHTML = '<div class="rsvp-card"><h1>Your invitation awaits</h1><p>Open the private invitation link sent by your organiser.</p></div>'; return;}
     state = registering ? await api("get_registration", {event:publicEvent}) : await api(staffInvitation ? "staff_invitation" : "get_invitation", staffInvitation ? {invitation: staffInvitation} : {token});
+    additionalAnswers = {...(state.additional_answers || {})};
     people = structuredClone(state.attendees);
     if (!people.length && state.invitation.response_status === "Pending") people.push({attendee_name: state.invitation.guest_name, age_group:"Adult", dietary_requirements:"", accessibility_requests:"", functions:state.functions.map(f => ({function:f.name, attendance:"Attending", meal_choice:""}))});
     render();

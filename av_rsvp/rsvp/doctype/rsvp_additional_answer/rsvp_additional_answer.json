@@ -1,0 +1,37 @@
+{
+ "doctype": "DocType",
+ "name": "RSVP Additional Answer",
+ "module": "RSVP",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "istable": 1,
+ "field_order": [
+  "question_key",
+  "question_label",
+  "answer"
+ ],
+ "fields": [
+  {
+   "fieldname": "question_key",
+   "label": "Question Key",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "question_label",
+   "label": "Question",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "answer",
+   "label": "Answer",
+   "fieldtype": "Small Text",
+   "read_only": 1,
+   "in_list_view": 1
+  }
+ ],
+ "permissions": []
+}

@@ -255,6 +255,100 @@ class TestRSVP(IntegrationTestCase):
         )
         self.assertIn("DTSTART:" + expected_utc.strftime("%Y%m%dT%H%M%SZ"), calendar["content"])
 
+    def test_event_questions_round_trip_reorder_and_scope(self):
+        self.event.append(
+            "additional_questions",
+            dict(question_label="Transport", question_type="Select", options="Bus\nCar"),
+        )
+        self.event.append("additional_questions", dict(question_label="Comments", question_type="Long Text"))
+        self.event.save()
+        key = self.event.additional_questions[0].question_key
+        token = token_for(self.invitation.access_nonce, "invitation")
+        frappe.set_user("Guest")
+        result = api.respond(token, "Attending", self.people(), additional_answers={key: "Bus"})
+        self.assertEqual(result["additional_answers"], {key: "Bus"})
+        saved = frappe.get_doc("RSVP Invitation", self.invitation.name)
+        self.assertEqual(saved.additional_answers[0].question_label, "Transport")
+        frappe.set_user("Administrator")
+        self.event.additional_questions.reverse()
+        for idx, question in enumerate(self.event.additional_questions, 1):
+            question.idx = idx
+        self.event.save()
+        result = api.get_invitation(token)
+        self.assertEqual(result["event"]["additional_questions"][1]["question_key"], key)
+        self.assertEqual(result["additional_answers"][key], "Bus")
+        with self.assertRaises(frappe.ValidationError):
+            api.respond(token, "Attending", self.people(), additional_answers={key: "Train"})
+        with self.assertRaises(frappe.ValidationError):
+            api.respond(token, "Attending", self.people(), additional_answers={"other-event": "secret"})
+        self.event.set("additional_questions", [])
+        self.event.save()
+        self.assertEqual(api.get_invitation(token)["additional_answers"], {})
+        self.assertEqual(
+            frappe.get_doc("RSVP Invitation", self.invitation.name).additional_answers[0].answer, "Bus"
+        )
+
+    def test_dietary_preferences_are_optional_configurable_and_hidden(self):
+        self.event.dietary_options = "Vegetarian\nStandard"
+        self.event.save()
+        people = self.people()
+        people[0]["dietary_requirements"] = "Vegetarian"
+        result = apply_response(self.invitation.name, "Attending", people)
+        attendee = result["attendees"][0].name
+        people = self.people(attendee=attendee)
+        people[0]["dietary_requirements"] = "Invalid choice"
+        with self.assertRaises(frappe.ValidationError):
+            apply_response(self.invitation.name, "Attending", people)
+        self.event.show_dietary_preferences = 0
+        self.event.save()
+        result = apply_response(self.invitation.name, "Attending", people)
+        self.assertEqual(result["attendees"][0].dietary_requirements, "")
+        self.assertEqual(frappe.db.get_value("RSVP Attendee", attendee, "dietary_requirements"), "Vegetarian")
+        self.event.show_dietary_preferences = 1
+        self.event.save()
+        result = apply_response(self.invitation.name, "Attending", self.people(attendee=attendee))
+        self.assertEqual(result["attendees"][0].dietary_requirements, "")
+
+    def test_disabled_additional_guests_enforced_for_private_and_public(self):
+        self.open_registration()
+        self.event.allow_additional_guests = 0
+        self.event.save()
+        self.assertEqual(api.get_registration(self.event.name)["invitation"]["max_attendees"], 1)
+        with self.assertRaises(frappe.ValidationError):
+            apply_response(self.invitation.name, "Attending", self.people() + self.people("Extra"))
+        frappe.db.savepoint("no_extra_public")
+        with self.assertRaises(frappe.ValidationError):
+            self.registration(people=self.people() + self.people("Extra"))
+        frappe.db.rollback(save_point="no_extra_public")
+        result = self.registration()
+        self.assertEqual(len(result["registration"]["attendees"]), 1)
+
+    def test_disabling_extra_guests_keeps_existing_group_editable(self):
+        group = apply_response(self.invitation.name, "Attending", self.people() + self.people("Extra"))
+        self.event.allow_additional_guests = 0
+        self.event.save()
+        people = [
+            dict(
+                attendee_name=p.attendee_name,
+                name=p.name,
+                age_group="Adult",
+                functions=[dict(function=self.function.name, attendance="Attending", meal_choice="")],
+            )
+            for p in group["attendees"]
+        ]
+        result = apply_response(self.invitation.name, "Attending", people)
+        self.assertEqual(len(result["attendees"]), 2)
+        people[1].pop("name")
+        with self.assertRaises(frappe.ValidationError):
+            apply_response(self.invitation.name, "Attending", people)
+
+    def test_additional_answers_require_response_service(self):
+        self.invitation.append(
+            "additional_answers", dict(question_key="forged", question_label="Forged", answer="value")
+        )
+        with self.assertRaises(frappe.ValidationError):
+            self.invitation.save()
+
     def open_registration(self):
         self.event.allow_public_registration = 1
         self.event.public_max_attendees = 2

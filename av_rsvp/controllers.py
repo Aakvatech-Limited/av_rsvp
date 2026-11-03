@@ -5,6 +5,7 @@ from frappe.model.document import Document
 from frappe.utils import add_days, cint, get_datetime
 
 from av_rsvp.permissions import require_event
+from av_rsvp.questions import choices, validate_questions
 from av_rsvp.security import (
     current_count,
     current_doc,
@@ -37,6 +38,18 @@ class RSVPEventBase(Document):
             frappe.throw("Event end must follow its start.")
         if get_datetime(self.rsvp_deadline) > get_datetime(self.ends_on):
             frappe.throw("The RSVP deadline must not follow the event end.")
+        old = self.get_doc_before_save() if not self.is_new() else None
+        old_keys = {row.name: row.question_key for row in old.additional_questions} if old else {}
+        for row in self.additional_questions:
+            if row.name in old_keys and row.question_key != old_keys[row.name]:
+                frappe.throw("Question keys cannot be changed. Add a new question instead.")
+            if not row.question_key:
+                row.question_key = new_nonce()[:20]
+        try:
+            validate_questions(self.additional_questions)
+            choices(self.dietary_options)
+        except ValueError as error:
+            frappe.throw(str(error))
         if self.allow_public_registration and not 1 <= cint(self.public_max_attendees) <= 100:
             frappe.throw("People per public registration must be between 1 and 100.")
         if self.map_url and not self.map_url.startswith("https://"):
@@ -172,6 +185,10 @@ class RSVPInvitationBase(Document):
             ]
             if old and any(self.get(key) != old.get(key) for key in protected):
                 frappe.throw("Use RSVP actions to change responses or invitation access.")
+            if old and [
+                (row.question_key, row.question_label, row.answer) for row in self.additional_answers
+            ] != [(row.question_key, row.question_label, row.answer) for row in old.additional_answers]:
+                frappe.throw("Use RSVP actions to change additional answers.")
             count = current_count("RSVP Attendee", {"invitation": self.name, "active": 1})
             if cint(self.max_attendees) < count:
                 frappe.throw("The allowance cannot be lower than the active attendee count.")
