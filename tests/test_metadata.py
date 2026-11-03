@@ -25,7 +25,7 @@ class Metadata(unittest.TestCase):
                 if field["fieldtype"] in {"Link", "Table"} and field.get("options", "").startswith("RSVP"):
                     self.assertIn(field["options"], doctypes)
 
-    def test_pilot_dependency_declarations(self):
+    def test_required_apps_have_version_declarations(self):
         metadata = tomllib.loads((ROOT.parent / "pyproject.toml").read_text())
         declared = metadata["tool"]["bench"]["frappe-dependencies"]
         self.assertTrue(declared.get("frappe"))
@@ -35,9 +35,8 @@ class Metadata(unittest.TestCase):
                 isinstance(target, ast.Name) and target.id == "required_apps" for target in node.targets
             ):
                 required = [name.rsplit("/", 1)[-1] for name in ast.literal_eval(node.value)]
-        # Pilot treats Frappe as implicit and compares only additional apps.
-        self.assertNotIn("frappe", required)
-        self.assertFalse(set(required) - (set(declared) - {"frappe"}))
+        self.assertIn("frappe", required)
+        self.assertFalse(set(required) - set(declared))
 
     def test_navigation_targets_exist(self):
         available = {}
