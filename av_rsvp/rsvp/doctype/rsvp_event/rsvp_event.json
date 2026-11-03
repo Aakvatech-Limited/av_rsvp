@@ -11,6 +11,7 @@
   "host_name",
   "banner",
   "description",
+  "footer_text",
   "schedule",
   "starts_on",
   "ends_on",
@@ -71,6 +72,12 @@
    "fieldname": "description",
    "label": "Description",
    "fieldtype": "Text Editor"
+  },
+  {
+   "fieldname": "footer_text",
+   "label": "Footer Text",
+   "fieldtype": "Text Editor",
+   "description": "Optional rich text displayed beneath the RSVP submission button. Links and formatting are supported."
   },
   {
    "fieldname": "schedule",
@@ -220,7 +227,7 @@
    "label": "Form Section Order",
    "fieldtype": "Table",
    "options": "RSVP Form Section",
-   "description": "Drag rows to reorder the public RSVP form. For attendance before contact details, place Response before Contact Details. Submit stays at the bottom."
+   "description": "Drag rows to reorder sections and tick Hide to suppress optional sections. Response and public-registration Contact Details must remain visible. Submit stays at the bottom."
   },
   {
    "fieldname": "event_website",
@@ -240,7 +247,8 @@
    "label": "Show Event Information",
    "fieldtype": "Check",
    "default": "1",
-   "description": "Show the movable information block. Edit individual elements in the linked Web Page HTML/CSS."
+   "description": "Legacy compatibility setting; use Form Section Order > Hide for Event Information.",
+   "hidden": 1
   }
  ],
  "permissions": [

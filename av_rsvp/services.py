@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import cint, get_datetime, now_datetime
 
 from av_rsvp.domain import allocation_for, clean_text, validate_people
-from av_rsvp.questions import choices, section_order, validate_answers
+from av_rsvp.questions import choices, hidden_sections, section_order, validate_answers
 from av_rsvp.security import (
     current_count,
     current_doc,
@@ -84,7 +84,7 @@ def snapshot(invitation, event):
     # Explicit projection: no team, guest directory, delivery logs or invitation secrets.
     return dict(
         event=public_event_details(event),
-        notes=invitation.notes,
+        notes=invitation.notes if "Message to Organiser" not in hidden_sections(event.form_sections) else "",
         additional_answers={
             row.question_key: row.answer
             for row in invitation.additional_answers
@@ -129,11 +129,18 @@ def public_event_details(event):
     } | {
         "event_page_url": published_page_url(event),
         "form_sections": section_order(event.form_sections),
+        "hidden_sections": hidden_sections(event.form_sections)
+        + (["Event Information"] if not event.show_event_information else []),
         "additional_questions": [
             {key: row.get(key) for key in ["question_key", "question_label", "question_type", "options"]}
             for row in event.additional_questions
         ],
         "description": frappe.utils.sanitize_html(event.description or ""),
+        "footer_text": (
+            frappe.utils.sanitize_html(event.footer_text or "")
+            if "Footer Text" not in hidden_sections(event.form_sections)
+            else ""
+        ),
         "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
         **{
             key: display_datetime(event.get(key), event.timezone)
@@ -212,7 +219,11 @@ def apply_response(
     if event.hide_first_guest_details:
         people = primary_contact_person(invitation, functions, people, response)
     try:
-        notes = clean_text(notes, 1000)
+        notes = (
+            invitation.notes
+            if "Message to Organiser" in hidden_sections(event.form_sections)
+            else clean_text(notes, 1000)
+        )
         validate_people(people, cint(invitation.max_attendees), functions, bool(event.allow_maybe))
         answers = (
             validate_answers(event.additional_questions, frappe.parse_json(additional_answers))

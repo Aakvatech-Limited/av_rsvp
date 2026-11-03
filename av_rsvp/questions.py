@@ -58,6 +58,7 @@ FORM_SECTIONS = [
     "Guest Details",
     "Additional Questions",
     "Message to Organiser",
+    "Footer Text",
 ]
 
 
@@ -68,7 +69,15 @@ def section_order(rows):
     ordered = [row.get("section") for row in rows]
     if len(ordered) != len(set(ordered)) or any(section not in FORM_SECTIONS for section in ordered):
         raise ValueError("Choose each supported form section only once.")
+    if any(row.get("hide") and row.get("section") == "Response" for row in rows):
+        raise ValueError("Response cannot be hidden because an attendance answer is required.")
     # Older saved layouts did not include Event Information; keep it at the top.
     if "Event Information" not in ordered:
         ordered.insert(0, "Event Information")
     return ordered + [section for section in FORM_SECTIONS if section not in ordered]
+
+
+def hidden_sections(rows):
+    """Return the hidden sections using the same validated section identifiers."""
+    section_order(rows)
+    return [row.get("section") for row in rows if row.get("hide")]
