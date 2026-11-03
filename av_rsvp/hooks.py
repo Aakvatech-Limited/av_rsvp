@@ -5,7 +5,7 @@ app_description = "Invitations, guest responses and event attendance"
 app_email = "info@aakvatech.com"
 app_license = "MIT"
 app_logo_url = "/assets/av_rsvp/images/logo.svg"
-required_apps = ["frappe"]
+# Frappe is implicit; its supported versions are declared in pyproject.toml.
 fixtures = [
     {
         "dt": "Role",
