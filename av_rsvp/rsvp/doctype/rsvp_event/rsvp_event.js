@@ -2,8 +2,9 @@ frappe.ui.form.on("RSVP Event", {
   refresh(frm) {
     if (frm.perm?.some(permission=>permission.write)) {
       frm.add_custom_button(__("Attendance Before Contact Details"),()=>{
+        const existing = Object.fromEntries((frm.doc.form_sections || []).map(row => [row.section, row.hide]));
         frm.clear_table("form_sections");
-        ["Event Information", "Response", "Contact Details", "Guest Details", "Additional Questions", "Message to Organiser"].forEach(section=>frm.add_child("form_sections", {section}));
+        ["Event Information", "Response", "Contact Details", "Guest Details", "Additional Questions", "Message to Organiser"].forEach(section=>frm.add_child("form_sections", {section, hide: existing[section] || 0}));
         frm.refresh_field("form_sections");
         frm.dirty();
         frappe.show_alert({message:__("Section order updated. Save the event to apply it."),indicator:"green"});
