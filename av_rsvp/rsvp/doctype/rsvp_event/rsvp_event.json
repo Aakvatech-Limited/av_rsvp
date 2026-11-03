@@ -31,7 +31,6 @@
   "dietary_options",
   "allow_additional_guests",
   "additional_questions",
-  "show_message_to_organizer",
   "form_sections",
   "contact_email",
   "contact_phone",
@@ -224,18 +223,11 @@
    "description": "Use the main contact as the first attendee without asking for Guest 1 details. Turn off Allow Additional Guests as well to hide all guest-entry cards."
   },
   {
-   "fieldname": "show_message_to_organizer",
-   "label": "Show Message to Organizer",
-   "fieldtype": "Check",
-   "default": "1",
-   "description": "Show the optional Message to Organiser section on the public RSVP form. Existing messages are retained when hidden."
-  },
-  {
    "fieldname": "form_sections",
    "label": "Form Section Order",
    "fieldtype": "Table",
    "options": "RSVP Form Section",
-   "description": "Drag rows to reorder the public RSVP form. For attendance before contact details, place Response before Contact Details. Submit stays at the bottom."
+   "description": "Drag rows to reorder sections and tick Hide to suppress optional sections. Response and public-registration Contact Details must remain visible. Submit stays at the bottom."
   },
   {
    "fieldname": "event_website",
@@ -255,7 +247,8 @@
    "label": "Show Event Information",
    "fieldtype": "Check",
    "default": "1",
-   "description": "Show the movable information block. Edit individual elements in the linked Web Page HTML/CSS."
+   "description": "Legacy compatibility setting; use Form Section Order > Hide for Event Information.",
+   "hidden": 1
   }
  ],
  "permissions": [
