@@ -34,7 +34,10 @@
   "contact_email",
   "contact_phone",
   "team",
-  "privacy_notice"
+  "privacy_notice",
+  "event_website",
+  "event_web_page",
+  "show_event_information"
  ],
  "fields": [
   {
@@ -218,6 +221,26 @@
    "fieldtype": "Table",
    "options": "RSVP Form Section",
    "description": "Drag rows to reorder the public RSVP form. For attendance before contact details, place Response before Contact Details. Submit stays at the bottom."
+  },
+  {
+   "fieldname": "event_website",
+   "label": "Event Website",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "event_web_page",
+   "label": "Event Web Page",
+   "fieldtype": "Link",
+   "options": "Web Page",
+   "read_only": 1,
+   "description": "Use Create Event Web Page to create an editable HTML/CSS/JavaScript page for this event."
+  },
+  {
+   "fieldname": "show_event_information",
+   "label": "Show Event Information",
+   "fieldtype": "Check",
+   "default": "1",
+   "description": "Show the movable information block. Edit individual elements in the linked Web Page HTML/CSS."
   }
  ],
  "permissions": [

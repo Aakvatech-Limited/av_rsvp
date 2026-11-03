@@ -52,6 +52,7 @@ def validate_answers(questions, answers):
 
 
 FORM_SECTIONS = [
+    "Event Information",
     "Contact Details",
     "Response",
     "Guest Details",
@@ -67,4 +68,7 @@ def section_order(rows):
     ordered = [row.get("section") for row in rows]
     if len(ordered) != len(set(ordered)) or any(section not in FORM_SECTIONS for section in ordered):
         raise ValueError("Choose each supported form section only once.")
+    # Older saved layouts did not include Event Information; keep it at the top.
+    if "Event Information" not in ordered:
+        ordered.insert(0, "Event Information")
     return ordered + [section for section in FORM_SECTIONS if section not in ordered]

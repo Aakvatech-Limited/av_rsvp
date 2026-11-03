@@ -38,6 +38,8 @@ class RSVPEventBase(Document):
             frappe.throw("Event end must follow its start.")
         if get_datetime(self.rsvp_deadline) > get_datetime(self.ends_on):
             frappe.throw("The RSVP deadline must not follow the event end.")
+        if self.is_new() and self.event_web_page and not frappe.flags.av_rsvp_service:
+            frappe.throw("Use Create Event Web Page after saving the event.")
         old = self.get_doc_before_save() if not self.is_new() else None
         old_keys = {row.name: row.question_key for row in old.additional_questions} if old else {}
         for row in self.additional_questions:
@@ -49,8 +51,11 @@ class RSVPEventBase(Document):
             validate_questions(self.additional_questions)
             choices(self.dietary_options)
             ordered_sections = section_order(self.form_sections)
-            for section in ordered_sections[len(self.form_sections) :]:
-                self.append("form_sections", {"section": section})
+            by_section = {row.section: row for row in self.form_sections}
+            self.set(
+                "form_sections",
+                [by_section.get(section) or {"section": section} for section in ordered_sections],
+            )
         except ValueError as error:
             frappe.throw(str(error))
         if self.allow_public_registration and not 1 <= cint(self.public_max_attendees) <= 100:
@@ -63,6 +68,8 @@ class RSVPEventBase(Document):
             require_event(self.name, 3)
             lock_event(self.name)
             old = self.get_doc_before_save()
+            if old and old.event_web_page != self.event_web_page and not frappe.flags.av_rsvp_service:
+                frappe.throw("Use Create Event Web Page to link an event website.")
             if old and old.timezone != self.timezone:
                 frappe.throw("The timezone cannot be changed after creation. Create a new event if needed.")
             if old and old.multiple_functions and not self.multiple_functions:

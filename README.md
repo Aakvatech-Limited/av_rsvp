@@ -80,6 +80,16 @@ Open **RSVP Event → Guest Form**:
 
 Answers are saved under **RSVP Invitation → Additional Answers** and restored when the guest reopens their private link or staff record a response. Removed questions retain their historical answers in Desk but are no longer exposed on the guest form. Hiding dietary preferences similarly keeps existing stored values without returning them to guests. Dietary visibility and additional guests remain enabled by default to preserve existing event behaviour.
 
+## Editable Web Page per event
+
+On a saved Event, use **Guest Form → Create Event Web Page**. This creates a draft **standard Frappe Web Page** with its own HTML, CSS and JavaScript, linked under Event Website. Creation/editing uses normal Website Manager permissions in addition to event access.
+
+Edit the Web Page's **Main Section (HTML)**, **Style → CSS**, and **Script → Javascript** as you would any normal Frappe page. A working default is supplied. Keep `#rsvp-root` with its `data-event` attribute for the RSVP form. The `<template data-rsvp-event-information>` block is fully editable HTML: reorder/remove content, add links or images, use `hidden`, or apply your CSS. Dynamic values use `data-rsvp-text="event_title"`, `data-rsvp-text="venue"`, `data-rsvp-html="description"` (Frappe-sanitised rich text), `data-rsvp-src="banner"` and `data-rsvp-link="map_url"`. The default also provides date, greeting, deadline and guest-allowance bindings.
+
+Move **Event Information** anywhere in **Form Section Order**, including the middle or end. Turn **Show Event Information** off to hide the whole block. Existing layouts keep it at the top until explicitly reordered. Submit remains last.
+
+Publish the Web Page when ready. New registration links, QR codes and private invitation links use its route; old `/rsvp` links open the published event page while keeping invitation tokens in the URL fragment. Unpublishing restores the standard RSVP URL. Creating again or saving the Event never overwrites customised page content. Each generated page holds its own copy of the starter CSS/JavaScript, so later app changes do not overwrite that code; update customised copies deliberately when adopting later client-side features. Server-side access, capacity and booking rules still apply.
+
 ## Counts and capacity
 
 An invitation is a household/company booking; an attendee is a person; a function response is that person's place in a particular function. One person attending two functions counts once in Confirmed People and twice in Confirmed Places. Invitation response totals count invitations, not people.

@@ -3,18 +3,28 @@ frappe.ui.form.on("RSVP Event", {
     if (frm.perm?.some(permission=>permission.write)) {
       frm.add_custom_button(__("Attendance Before Contact Details"),()=>{
         frm.clear_table("form_sections");
-        ["Response", "Contact Details", "Guest Details", "Additional Questions", "Message to Organiser"].forEach(section=>frm.add_child("form_sections", {section}));
+        ["Event Information", "Response", "Contact Details", "Guest Details", "Additional Questions", "Message to Organiser"].forEach(section=>frm.add_child("form_sections", {section}));
         frm.refresh_field("form_sections");
         frm.dirty();
         frappe.show_alert({message:__("Section order updated. Save the event to apply it."),indicator:"green"});
       }, __("Guest Form"));
     }
     if(frm.is_new())return;
+    if (frm.doc.event_web_page) {
+      frm.add_custom_button(__("Edit Event Web Page"),()=>frappe.set_route("Form", "Web Page", frm.doc.event_web_page), __("Guest Form"));
+    } else if (frappe.model.can_create("Web Page")) {
+      frm.add_custom_button(__("Create Event Web Page"),async()=>{
+        if (frm.is_dirty()) {frappe.msgprint(__("Save the event first."));return;}
+        const {message} = await frappe.call({method:"av_rsvp.api.create_event_web_page",args:{event:frm.doc.name},type:"POST",freeze:true});
+        await frm.reload_doc();
+        frappe.set_route("Form", "Web Page", message.name);
+      }, __("Guest Form"));
+    }
     frm.add_custom_button(__("Event Overview"),()=>{frappe.route_options={event:frm.doc.name};frappe.set_route("rsvp-overview");});
     frm.add_custom_button(__("Check-in"),()=>{frappe.route_options={event:frm.doc.name};frappe.set_route("rsvp-checkin");});
     if(frm.doc.allow_public_registration && frm.doc.status === "Published") {
       frm.add_custom_button(__("Registration QR Code"),()=>av_rsvp_show_registration_qr(frm));
-      frm.add_custom_button(__("Public Registration Page"),()=>window.open(`/rsvp?event=${encodeURIComponent(frm.doc.name)}`, "_blank", "noopener,noreferrer"));
+      frm.add_custom_button(__("Public Registration Page"),async()=>{const {message}=await frappe.call({method:"av_rsvp.api.event_registration_link",args:{event:frm.doc.name},type:"POST"});window.open(message.url,"_blank","noopener,noreferrer");});
     }
     if(frappe.model.can_create("RSVP Invitation"))frm.add_custom_button(__("Add invitation"),()=>frappe.new_doc("RSVP Invitation",{event:frm.doc.name}));
   }

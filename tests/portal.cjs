@@ -39,7 +39,7 @@ const fixture = {
       await page.evaluate(()=>{window.testState.event.form_sections=['Response','Additional Questions','Contact Details','Guest Details','Message to Organiser'];});
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       const sectionOrder=await page.locator('[data-form-section]').evaluateAll(nodes=>nodes.map(n=>n.dataset.formSection));
-      assert.deepEqual(sectionOrder,['Response','Additional Questions','Contact Details','Guest Details','Message to Organiser']);
+      assert.deepEqual(sectionOrder,['Event Information','Response','Additional Questions','Contact Details','Guest Details','Message to Organiser']);
       assert.ok(await page.locator('#overall').evaluate(input=>Boolean(input.compareDocumentPosition(document.querySelector('#save-response')) & Node.DOCUMENT_POSITION_FOLLOWING)));
       if(publicMode) assert.ok(await page.locator('#overall').evaluate(input=>Boolean(input.compareDocumentPosition(document.querySelector('#contact-guest_name')) & Node.DOCUMENT_POSITION_FOLLOWING)));
       assert.equal(await page.locator('[data-person]').count(),1);
@@ -109,6 +109,39 @@ const fixture = {
       const hidden=await page.evaluate(()=>JSON.parse(window.calls.at(-1).args.people));
       assert.equal(hidden[0].functions[0].attendance,'Attending');
       assert.ok(hidden[0].attendee_name);
+      // Move the information block to the end, then hide it without hiding inputs.
+      await page.evaluate(()=>{window.testState.event.form_sections=['Response','Contact Details','Guest Details','Additional Questions','Message to Organiser','Event Information'];});
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      assert.equal(await page.locator('[data-form-section]').last().getAttribute('data-form-section'),'Event Information');
+      await page.evaluate(()=>{window.testState.event.show_event_information=0;});
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      assert.equal(await page.getByRole('heading',{name:'Annual Reception',exact:true}).count(),0);
+      assert.equal(await page.locator('#overall').count(),1);
+      // A native per-event Web Page can change its HTML and preserve authored visibility.
+      await page.evaluate(()=>{
+        const template=document.createElement('template');template.setAttribute('data-rsvp-event-information','');
+        template.innerHTML='<section class="rsvp-card"><h1 data-rsvp-text="event_title"></h1><p class="custom-copy">Our customised event</p><p hidden data-rsvp-text="venue"></p><div data-rsvp-html="description"></div></section>';
+        document.body.appendChild(template);window.testState.event.show_event_information=1;
+      });
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      assert.equal(await page.locator('.custom-copy').innerText(),'Our customised event');
+      assert.equal(await page.locator('[data-rsvp-text="venue"]').isVisible(),false);
+      assert.equal(await page.getByRole('heading',{name:'Annual Reception',exact:true}).count(),1);
+      // Register from an event-specific page with no event query parameter.
+      await page.evaluate(()=>{
+        window.history.replaceState(null,'','/events/custom-event');
+        document.querySelector('#rsvp-root').dataset.event='public-event';
+        window.testState.event.event_page_url='https://rsvp.test/events/custom-event';
+        window.testState.invitation.response_status='Pending';window.testState.invitation.guest_name='';
+        window.testState.attendees=[];
+      });
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      await page.locator('#contact-guest_name').fill('Custom Page Guest');
+      await page.locator('#contact-email').fill('custom@example.com');
+      await page.getByRole('button',{name:'Register and save RSVP',exact:true}).click();
+      await page.getByRole('status').waitFor();
+      assert.equal(new URL(page.url()).pathname,'/events/custom-event');
+      assert.equal(new URL(page.url()).hash,'#'+'b'.repeat(64));
       assert.deepEqual(errors,[]);
       await page.screenshot({path:`/tmp/rsvp-portal-${publicMode?"public":"private"}-${viewport.width}.png`,fullPage:true});
       await page.close();

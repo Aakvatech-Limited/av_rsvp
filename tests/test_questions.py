@@ -56,8 +56,12 @@ class FormSectionOrder(unittest.TestCase):
     def test_default_and_partial_order_preserve_all_sections(self):
         self.assertEqual(section_order([]), FORM_SECTIONS)
         ordered = section_order([{"section": "Response"}, {"section": "Contact Details"}])
-        self.assertEqual(ordered[:2], ["Response", "Contact Details"])
+        self.assertEqual(ordered[:3], ["Event Information", "Response", "Contact Details"])
         self.assertEqual(set(ordered), set(FORM_SECTIONS))
+        self.assertEqual(
+            section_order([{"section": name} for name in [*FORM_SECTIONS[1:], "Event Information"]])[-1],
+            "Event Information",
+        )
 
     def test_unknown_and_duplicate_sections_are_rejected(self):
         for rows in [[{"section": "Unknown"}], [{"section": "Response"}] * 2]:
