@@ -136,7 +136,11 @@ def public_event_details(event):
             for row in event.additional_questions
         ],
         "description": frappe.utils.sanitize_html(event.description or ""),
-        "footer_text": frappe.utils.sanitize_html(event.footer_text or ""),
+        "footer_text": (
+            frappe.utils.sanitize_html(event.footer_text or "")
+            if "Footer Text" not in hidden_sections(event.form_sections)
+            else ""
+        ),
         "banner": event.banner if event.banner and event.banner.startswith("/files/") else None,
         **{
             key: display_datetime(event.get(key), event.timezone)
