@@ -21,6 +21,8 @@ Built by **Aakvatech Limited**. No ERPNext dependency.
 - WhatsApp sharing links (manual sending; no automated WhatsApp provider required).
 - Organiser entry of responses on behalf of guests, with the signed-in user recorded.
 - Event overview with invitation/person counts, function totals and response filters.
+- Organizer Dashboard with event-scoped KPI cards, response and attendance charts, function capacity and check-in breakdowns.
+- Native Frappe Connections panels across Event, Function, Guest, Invitation, Attendee and Function Response records.
 - Camera QR scanning, manual attendee lookup, duplicate-check-in alerts and audited reversals.
 - Guest register, catering requirements and check-in register reports; guest CSV and calendar downloads.
 - Frappe v16 app entry, standard Dock, Sidebar and Workspace.
@@ -35,15 +37,15 @@ Built by **Aakvatech Limited**. No ERPNext dependency.
 ## Installation
 
 ```bash
-bench get-app https://github.com/Aakvatech-Limited/av_rsvp --branch feat/initial-rsvp-app
+bench get-app https://github.com/Aakvatech-Limited/av_rsvp --branch main
 bench --site your-site install-app av_rsvp
 bench --site your-site migrate
 bench build --app av_rsvp
 ```
 
-Use `main` after the implementation pull request is merged. Assign **RSVP Administrator** to the app administrator, or **Event Manager** to organisers. The app does not automatically assign roles to existing users.
+Assign **RSVP Administrator** to the app administrator, or **Event Manager** to organisers. The app does not automatically assign roles to existing users.
 
-Open **AV RSVP → RSVP** from the Apps screen. The workspace links to Event Overview, Events, Invitations, Attendees, Check-in, masters, reports and settings.
+Open **AV RSVP → RSVP** from the Apps screen. The workspace links to Organizer Dashboard, Event Overview, Events, Invitations, Attendees, Check-in, masters, reports and settings. The Organizer Dashboard also appears first in the RSVP Sidebar.
 
 ## First event walkthrough
 
@@ -90,6 +92,48 @@ Move **Event Information** anywhere in **Form Section Order**, including the mid
 
 Publish the Web Page when ready. New registration links, QR codes and private invitation links use its route; old `/rsvp` links open the published event page while keeping invitation tokens in the URL fragment. Unpublishing restores the standard RSVP URL. Creating again or saving the Event never overwrites customised page content. Each generated page holds its own copy of the starter CSS/JavaScript, so later app changes do not overwrite that code; update customised copies deliberately when adopting later client-side features. Server-side access, capacity and booking rules still apply.
 
+## Organizer Dashboard and event monitoring
+
+The **Organizer Dashboard** is a custom Frappe Desk Page at `/app/rsvp-organizer-dashboard`, linked from the RSVP Workspace and Sidebar. It is designed for **Event Manager** and **Event Coordinator** users, with access also available to **System Manager** and **RSVP Administrator**. It is separate from the operational **Event Overview** (`/app/rsvp-overview`).
+
+The dashboard can summarize all eligible events or a selected event using its **Event** filter. The server checks the user's assigned-event access before returning analytics; it does not grant permission to unrelated events. The backend currently retrieves up to 500 visible events for the user's overview.
+
+| KPI card | Meaning |
+|---|---|
+| Invitations | Non-revoked invitation records |
+| Pending RSVPs | Invitations with Pending response status |
+| Attending RSVPs | Invitations with Attending response status |
+| Confirmed People | Distinct confirmed attendees, counted once per event |
+| Confirmed Places | Confirmed attendee/function allocations |
+| Waitlisted Places | Waitlisted attendee/function allocations |
+| Checked-in People | Distinct people with active check-ins, counted once per event |
+| Limited Function Capacity | Sum of positive capacities of enabled functions; unlimited functions contribute no numeric limit |
+
+The **Invitation Responses** donut chart separates Pending, Attending, Declined and Maybe invitations. The **Function Attendance** bar chart displays confirmed places by function. The **Function Capacity & Check-in** table lists capacity, confirmed places, waitlisted places and checked-in places for each enabled function, with a link to its record.
+
+These are **live calculations on a custom Desk Page**, not standalone Frappe Dashboard Chart, Dashboard Chart Source or Number Card documents. The cards and charts refresh when the page loads, the event filter changes or Refresh is clicked. Aggregate counts across multiple functions should not be confused with unique attendees or total event venue capacity.
+
+**Login and navigation:** The dashboard is a prominent RSVP navigation destination, but the current implementation does **not** automatically redirect every organizer to it immediately after authentication. A site administrator can configure the user's Frappe landing/default app to AV RSVP and provide the dashboard route as a shortcut. Do not assume that setting the default app automatically changes the login route to the dashboard.
+
+**Access boundaries:** Event Manager and Event Coordinator are authorized for organizer analytics on their eligible events. **Event Host** continues to use the restricted read-only Event Overview, not the organizer dashboard. **Check-in Operator** is not granted organizer dashboard access. Server-side event authorization still applies independently of menu visibility.
+
+## Related DocType connections
+
+Native Frappe **Connections** sections make related records accessible from the form dashboard without copying link data into child tables.
+
+| Open this record | Connected records |
+|---|---|
+| RSVP Event | RSVP Function, RSVP Invitation, RSVP Attendee, RSVP Function Response, RSVP Check-in, RSVP Message Log |
+| RSVP Function | RSVP Function Response, RSVP Check-in |
+| RSVP Guest | RSVP Invitation |
+| RSVP Invitation | RSVP Attendee, RSVP Function Response, RSVP Message Log |
+| RSVP Attendee | RSVP Function Response, RSVP Check-in |
+| RSVP Function Response | RSVP Check-in |
+
+These connections use existing Link fields such as `event`, `function`, `guest`, `invitation`, `attendee` and `response`. They are navigation aids, **not extra CRUD permissions**: users must still have the relevant DocType and event-level access. Frappe child tables (event team, questions, form sections and additional answers) remain embedded in their parent documents.
+
+The connection configuration lives in `av_rsvp/rsvp/doctype/<doctype>/<doctype>_dashboard.py`. The organizer analytics API lives in `av_rsvp/organizer_dashboard.py`, and the Desk Page lives in `av_rsvp/rsvp/page/rsvp_organizer_dashboard/`.
+
 ## Counts and capacity
 
 An invitation is a household/company booking; an attendee is a person; a function response is that person's place in a particular function. One person attending two functions counts once in Confirmed People and twice in Confirmed Places. Invitation response totals count invitations, not people.
@@ -106,7 +150,10 @@ Waiting-list promotion is FIFO **per person per function**. A family can be part
 | Event Manager | Own events and events assigned at manager level; guest directory and event setup |
 | Event Coordinator | Assigned-event invitation viewing, response entry, communications and reports |
 | Check-in Operator | Assigned-event function/attendee lookup and check-in; no dietary/accessibility fields |
+| Event Host | Read-only Event Overview for events specifically assigned with Event Host access; no organizer dashboard or general guest-directory access |
 | Public guest | Opted-in public event registration, or their private invitation through purpose-built endpoints |
+
+The organizer dashboard is available to Event Manager and Event Coordinator on eligible events, as well as app administrators. Assigning a role alone is not sufficient to view another organizer's events.
 
 The guest directory is a shared resource for event managers. Event team rows must be paired with matching user roles. Coordinators should use response-entry and communication actions; managers maintain the guest directory and create/edit invitation details.
 
@@ -123,6 +170,18 @@ No public role receives DocType CRUD access. Guest endpoints validate invitation
 Entry QR codes have a separate purpose and cannot edit an RSVP. The staff user must be assigned to the chosen event before validating a pass. A pass confirms eligibility; it does not prove the presenter's identity.
 
 Datetimes are stored in the site's normal Frappe timezone. Desk date entry follows each staff user's timezone. The guest portal displays dates in the event timezone, and calendar files use UTC. The retention setting records the organiser's policy; **automatic deletion/anonymisation is not implemented**. Set the privacy notice and manage retention through your approved process.
+
+## Updating an existing installation
+
+After pulling the version containing organizer dashboard and Connections changes, run:
+
+```bash
+bench --site your-site migrate
+bench build --app av_rsvp
+bench --site your-site clear-cache
+```
+
+Open the Organizer Dashboard from the RSVP Sidebar, verify counts with a known event, then verify Connections from an RSVP Event and its related forms. Test independently as an Event Manager, Event Coordinator, Event Host, Check-in Operator and a user assigned to a different event. This documentation describes the repository implementation; it is not a substitute for live-site browser and permission testing.
 
 ## Validation
 
