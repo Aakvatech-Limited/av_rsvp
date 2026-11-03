@@ -7,7 +7,7 @@ import frappe
 from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime
 
-from av_rsvp.permissions import access_level, require_event
+from av_rsvp.permissions import access_level, is_event_host, require_event, require_overview
 from av_rsvp.security import (
     check_token,
     current_doc,
@@ -209,9 +209,19 @@ def reverse_checkin(checkin, reason):
 
 
 @frappe.whitelist(methods=["POST"])
+def host_events():
+    if "Event Host" not in frappe.get_roles():
+        frappe.throw("Event Host role required.", frappe.PermissionError)
+    names = frappe.get_all("RSVP Event Team", filters={"parenttype": "RSVP Event", "user": frappe.session.user, "access_level": "Event Host"}, pluck="parent")
+    if not names:
+        return []
+    return frappe.get_all("RSVP Event", filters={"name": ["in", names]}, fields=["name", "event_title"], order_by="starts_on desc")
+
+
+@frappe.whitelist(methods=["POST"])
 @retry_transaction
 def event_overview(event, search="", response_status="", page=0):
-    require_event(event, 2)
+    require_overview(event)
     event_doc = frappe.get_doc("RSVP Event", event)
     filters = {"event": event, "revoked": 0}
     stats = {"invitations": frappe.db.count("RSVP Invitation", filters)}
@@ -279,6 +289,7 @@ def event_overview(event, search="", response_status="", page=0):
         invitations=rows,
         functions=functions,
         access_level=access_level(event),
+        read_only_host=access_level(event) < 2 and is_event_host(event),
         has_more=len(rows) == 50,
     )
 

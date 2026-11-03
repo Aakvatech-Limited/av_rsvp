@@ -19,6 +19,12 @@
  },
  {
   "doctype": "Role",
+  "role_name": "Event Host",
+  "name": "Event Host",
+  "desk_access": 1
+ },
+ {
+  "doctype": "Role",
   "role_name": "Check-in Operator",
   "name": "Check-in Operator",
   "desk_access": 1
