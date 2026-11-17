@@ -1,9 +1,8 @@
-from html import escape
-
 import frappe
-from frappe.utils import add_days, get_datetime, now_datetime
+from frappe.utils import add_days, get_datetime, get_system_timezone, now_datetime
 
 from av_rsvp.domain import event_now
+from av_rsvp.email_content import email_content
 from av_rsvp.security import (
     current_doc,
     current_rows,
@@ -14,6 +13,7 @@ from av_rsvp.security import (
     retry_transaction,
     service_write,
 )
+from av_rsvp.urls import public_url
 
 
 def queue_message(invitation, purpose, dedup_key):
@@ -52,7 +52,7 @@ def deliver_message(log_name):
     try:
         sender_account = frappe.db.get_single_value("RSVP Settings", "default_sender")
         sender = frappe.db.get_value("Email Account", sender_account, "email_id") if sender_account else None
-        body = f"<p>Hello {escape(invitation.guest_name)},</p><p>{escape(event.event_title)}</p>"
+        answers = []
         if log.purpose == "Confirmation":
             answers = frappe.get_all(
                 "RSVP Function Response",
@@ -60,16 +60,22 @@ def deliver_message(log_name):
                 fields=["allocation"],
                 order_by="creation",
             )
-            body += f"<p>Your response: {escape(invitation.response_status)}. Confirmed places across functions: {sum(r.allocation == 'Confirmed' for r in answers)}. Waitlisted places: {sum(r.allocation == 'Waitlisted' for r in answers)}.</p>"
-        body += f'<p><a href="{escape(invitation_url(invitation), quote=True)}">View invitation and attendance details</a></p>'
+        subject, body = email_content(
+            invitation,
+            event,
+            log.purpose,
+            invitation_url(invitation),
+            get_system_timezone(),
+            confirmed=sum(r.allocation == "Confirmed" for r in answers),
+            waitlisted=sum(r.allocation == "Waitlisted" for r in answers),
+            banner_url=public_url(event.banner) if event.banner else None,
+        )
         attachments = []
         if (
             log.purpose == "Confirmation"
             and invitation.response_status == "Attending"
             and any(r.allocation == "Confirmed" for r in answers)
         ):
-            from frappe.utils import get_system_timezone
-
             from av_rsvp.calendar import calendar_content
 
             attachments.append(
@@ -83,12 +89,14 @@ def deliver_message(log_name):
         queue = frappe.sendmail(
             recipients=[invitation.email],
             sender=sender or "",
-            subject=f"{log.purpose}: {event.event_title}",
+            subject=subject,
             message=body,
             attachments=attachments,
             reference_doctype="RSVP Message Log",
             reference_name=log.name,
             add_unsubscribe_link=0,
+            raw_html=True,
+            add_css=False,
         )
         with service_write():
             log.email_queue = queue.name if queue else None

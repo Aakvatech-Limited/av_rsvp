@@ -4,22 +4,22 @@ from html import escape
 from urllib.parse import urlencode
 
 import frappe
-from frappe.utils import get_url
 
 from av_rsvp.permissions import require_event
 from av_rsvp.security import current_doc, lock_event, service_write
+from av_rsvp.urls import public_url
 
 
 def published_page_url(event):
     if event.event_web_page:
         page = frappe.db.get_value("Web Page", event.event_web_page, ["route", "published"], as_dict=True)
         if page and page.published and page.route:
-            return get_url("/" + page.route.lstrip("/"))
+            return public_url("/" + page.route.lstrip("/"))
     return None
 
 
 def registration_url(event):
-    return published_page_url(event) or get_url("/rsvp") + "?" + urlencode({"event": event.name})
+    return published_page_url(event) or public_url("/rsvp") + "?" + urlencode({"event": event.name})
 
 
 def create_page(event_name):

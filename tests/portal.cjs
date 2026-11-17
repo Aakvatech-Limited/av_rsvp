@@ -113,7 +113,7 @@ const fixture = {
       await page.evaluate(()=>{window.testState.event.form_sections=['Response','Contact Details','Guest Details','Additional Questions','Message to Organiser','Event Information'];});
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       assert.equal(await page.locator('[data-form-section]').last().getAttribute('data-form-section'),'Event Information');
-      await page.evaluate(()=>{window.testState.event.show_event_information=0;});
+      await page.evaluate(()=>{window.testState.event.hidden_sections=['Event Information'];});
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       assert.equal(await page.getByRole('heading',{name:'Annual Reception',exact:true}).count(),0);
       assert.equal(await page.locator('#overall').count(),1);
@@ -121,7 +121,7 @@ const fixture = {
       await page.evaluate(()=>{
         const template=document.createElement('template');template.setAttribute('data-rsvp-event-information','');
         template.innerHTML='<section class="rsvp-card"><h1 data-rsvp-text="event_title"></h1><p class="custom-copy">Our customised event</p><p hidden data-rsvp-text="venue"></p><div data-rsvp-html="description"></div></section>';
-        document.body.appendChild(template);window.testState.event.show_event_information=1;
+        document.body.appendChild(template);window.testState.event.hidden_sections=[];
       });
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       assert.equal(await page.locator('.custom-copy').innerText(),'Our customised event');

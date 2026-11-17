@@ -1,0 +1,25 @@
+<main class="rsvp-shell lodge-shell">
+  <header class="lodge-masthead"><span>YOUR PERSONAL INVITATION</span><span>RSVP</span></header>
+  <template data-rsvp-event-information>
+    <section class="rsvp-card event-information">
+      <div class="lodge-hero">
+        <img class="rsvp-banner" data-rsvp-src="banner" alt="Event emblem">
+        <p class="rsvp-eyebrow">A PERSONAL INVITATION</p>
+        <h1 data-rsvp-text="event_title"></h1>
+        <div class="lodge-rule" aria-hidden="true">✦</div>
+        <p class="lodge-greeting" data-rsvp-text="greeting"></p>
+      </div>
+      <div class="lodge-facts">
+        <div><span>WHEN</span><strong data-rsvp-text="event_date"></strong><small data-rsvp-text="event_time"></small></div>
+        <div><span>WHERE</span><strong data-rsvp-text="venue"></strong><a data-rsvp-link="map_url" target="_blank" rel="noopener noreferrer">Get directions ↗</a></div>
+      </div>
+      <div class="lodge-letter">
+        <p class="rsvp-eyebrow">FROM THE HOST</p>
+        <div class="lodge-description" data-rsvp-html="description"></div>
+        <div class="lodge-signature" data-rsvp-html="footer_text"></div>
+      </div>
+    </section>
+  </template>
+  <div id="rsvp-root" data-event="__EVENT_ID__" aria-live="polite"><div class="rsvp-card">Loading your invitation…</div></div>
+  <footer class="lodge-footer"><span>AV RSVP</span><span>Thoughtfully planned. Simply confirmed.</span></footer>
+</main>
