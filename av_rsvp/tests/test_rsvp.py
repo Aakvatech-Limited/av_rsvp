@@ -399,9 +399,17 @@ class TestRSVP(IntegrationTestCase):
         self.open_registration()
         self.event.set("form_sections", [dict(section="Response"), dict(section="Contact Details")])
         self.event.save()
-        self.assertEqual(len(self.event.form_sections), 6)
-        expected = [row.section for row in self.event.form_sections]
-        self.assertEqual(expected[:3], ["Event Information", "Response", "Contact Details"])
+        self.event.reload()
+        expected = [
+            "Event Information",
+            "Response",
+            "Contact Details",
+            "Guest Details",
+            "Additional Questions",
+            "Message to Organiser",
+            "Footer Text",
+        ]
+        self.assertEqual([row.section for row in self.event.form_sections], expected)
         self.assertEqual(api.get_registration(self.event.name)["event"]["form_sections"], expected)
         token = token_for(self.invitation.access_nonce, "invitation")
         self.assertEqual(api.get_invitation(token)["event"]["form_sections"], expected)
