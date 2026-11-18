@@ -23,12 +23,11 @@ def token_for(nonce, purpose):
 
 
 def invitation_url(invitation):
-    from frappe.utils import get_url
-
     from av_rsvp.event_pages import published_page_url
+    from av_rsvp.urls import public_url
 
     page_url = published_page_url(current_doc("RSVP Event", invitation.event))
-    return (page_url or get_url("/rsvp")) + "#" + token_for(invitation.access_nonce, "invitation")
+    return (page_url or public_url("/rsvp")) + "#" + token_for(invitation.access_nonce, "invitation")
 
 
 def check_token(token):

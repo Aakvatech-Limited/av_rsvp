@@ -56,6 +56,10 @@ class RSVPEventBase(Document):
                 "form_sections",
                 [by_section.get(section) or {"section": section} for section in ordered_sections],
             )
+            # Existing child rows retain their idx when reused by Document.set.
+            # Reindex after inserting omitted sections so reload preserves this order.
+            for idx, row in enumerate(self.form_sections, 1):
+                row.idx = idx
         except ValueError as error:
             frappe.throw(str(error))
         if self.allow_public_registration and not 1 <= cint(self.public_max_attendees) <= 100:

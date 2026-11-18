@@ -185,6 +185,10 @@ Open the Organizer Dashboard from the RSVP Sidebar, verify counts with a known e
 
 ## Validation
 
+An optional [formal invitation page](docs/formal-invitation-page.md) is available
+for existing native Web Pages. Its questionnaire and personal message remain driven
+by the event; existing page customisations are not overwritten on app updates.
+
 ```bash
 python -m unittest discover -s tests -v
 ruff check .
