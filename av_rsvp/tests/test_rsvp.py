@@ -410,6 +410,7 @@ class TestRSVP(IntegrationTestCase):
             "Footer Text",
         ]
         self.assertEqual([row.section for row in self.event.form_sections], expected)
+        self.assertEqual([row.idx for row in self.event.form_sections], list(range(1, 8)))
         self.assertEqual(api.get_registration(self.event.name)["event"]["form_sections"], expected)
         token = token_for(self.invitation.access_nonce, "invitation")
         self.assertEqual(api.get_invitation(token)["event"]["form_sections"], expected)
