@@ -160,6 +160,7 @@ const fixture = {
       await page.evaluate(() => {
         const state = window.testState;
         state.event.event_page_url = "https://rsvp.test/events/custom-event";
+        state.event.confirmation_text = "Hello Jacob, we are pleased to confirm your participation in the Annual Reception on January 10, 2027 at 6:00 PM.";
         state.attendees[0].functions[0].allocation = "Confirmed";
       });
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
@@ -170,7 +171,7 @@ const fixture = {
       assert.equal(new URL(page.url()).pathname, "/rsvp");
 
       await page.evaluate(() => {
-        window.testState.event.confirmation_message = "Welcome {guest_name}! <b>{event_title}</b>";
+        window.testState.event.confirmation_text = "Welcome Jacob! <b>Annual Reception</b>";
       });
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       assert.equal(await page.locator("#rsvp-root p").innerText(), "Welcome Jacob! <b>Annual Reception</b>");

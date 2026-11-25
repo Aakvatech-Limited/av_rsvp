@@ -161,6 +161,8 @@ On the **Event Host** page, choose an event and click **Invitations** or **Atten
 
 ## Email behaviour
 
+Use **Preview Messages** on a saved **RSVP Event** or **RSVP Invitation** to review the invitation email, confirmation email, and guest confirmation. The event uses a sample guest name and the invitation uses its guest's name. The previews use a sample confirmation, inert links, and a sample entry QR code.
+
 Under **RSVP Event → Confirmation**, **Confirmation Email Subject** sets the subject of future response confirmation emails. Leave it blank to use the standard subject.
 
 Enable **Show Only Confirmation Message and QR Code** to replace the guest form once all requested places are confirmed. Guests see their message above their entry QR codes. Contact the organiser to change a confirmed response. The optional **Confirmation Message** accepts plain text and the placeholders `{guest_name}`, `{event_title}`, `{event_date}`, and `{event_time}`. The date and time follow the event timezone.

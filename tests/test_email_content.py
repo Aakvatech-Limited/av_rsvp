@@ -1,6 +1,6 @@
 import unittest
 
-from av_rsvp.email_content import email_content
+from av_rsvp.email_content import confirmation_page_message, email_content
 
 
 class Record(dict):
@@ -56,6 +56,17 @@ class EmailContent(unittest.TestCase):
         self.assertIn("Confirmed places across functions: 2", body)
         self.assertIn("Waitlisted places: 1", body)
         self.assertNotIn("Please confirm your attendance by", body)
+
+    def test_guest_confirmation_default_and_custom_message(self):
+        starts_on = "2026-12-04 09:00:00"
+        self.assertEqual(
+            confirmation_page_message("", "Jacob", "TCC 65th Anniversary Celebration", starts_on),
+            "Hello Jacob, we are pleased to confirm your participation in the TCC 65th Anniversary Celebration on December 4, 2026 at 9:00 AM.",
+        )
+        self.assertEqual(
+            confirmation_page_message("{guest_name}\n{event_time}", "Jacob {event_title}", "TCC", starts_on),
+            "Jacob {event_title}\n9:00 AM",
+        )
 
     def test_custom_confirmation_email_subject(self):
         self.event.confirmation_email_subject = "  Your anniversary pass\r\nTCC & Guests  "
