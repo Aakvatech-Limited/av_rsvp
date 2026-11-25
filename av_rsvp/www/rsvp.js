@@ -13,6 +13,12 @@ frappe.ready(async () => {
   const hideFirst = () => Boolean(state.event.hide_first_guest_details);
   const showDiet = () => state.event.show_dietary_preferences !== 0 && state.event.show_dietary_preferences !== false;
   const sectionHidden = section => (state.event.hidden_sections || []).includes(section);
+  const showConfirmation = () => !staffInvitation && state.event.show_confirmation_pass_only
+    && state.invitation.response_status === "Attending"
+    && state.attendees.some(person => person.entry_qr)
+    && state.attendees.every(person => person.functions.every(answer =>
+      answer.attendance === "Declined" || answer.allocation === "Confirmed"
+    ));
   const api = async (method, args) => (await frappe.call({method: `av_rsvp.api.${method}`, args, type: "POST"})).message;
   const date = value => value ? new Date(value.replace(" ", "T")).toLocaleString(undefined, {dateStyle: "medium", timeStyle: "short"}) : "";
   function error(message) {
@@ -107,6 +113,25 @@ frappe.ready(async () => {
   }
   function render(saved = false) {
     const e = state.event;
+    if (showConfirmation()) {
+      const start = new Date(e.starts_on.replace(" ", "T") + "Z");
+      // The server already converted this wall time to the event timezone.
+      const values = {
+        guest_name: state.invitation.guest_name,
+        event_title: e.event_title,
+        event_date: start.toLocaleDateString("en-US", {dateStyle: "long", timeZone: "UTC"}),
+        event_time: start.toLocaleTimeString("en-US", {timeStyle: "short", timeZone: "UTC"}),
+      };
+      const template = e.confirmation_message?.trim()
+        || "Hello {guest_name}, we are pleased to confirm your participation in the {event_title} on {event_date} at {event_time}.";
+      const message = template.replace(/\{(guest_name|event_title|event_date|event_time)\}/g, (_, key) => values[key]);
+      root.closest(".rsvp-shell")?.querySelectorAll(":scope > .rsvp-brand, :scope > footer")
+        .forEach(node => node.remove());
+      const passes = state.attendees.filter(person => person.entry_qr);
+      root.innerHTML = `<section class="rsvp-card text-center"><p class="rsvp-multiline">${esc(message)}</p>
+        ${passes.map(person => `<img src="${esc(person.entry_qr)}" width="150" height="150" alt="Entry QR code for ${esc(person.attendee_name)}">`).join("")}</section>`;
+      return;
+    }
     root.innerHTML = `
       ${saved ? '<div class="rsvp-notice" role="status">Your response has been saved. Check each function’s confirmation status below.</div>' : ""}
       ${!state.editable ? '<div class="rsvp-notice">Online responses are closed. Contact the organiser for changes.</div>' : ""}
@@ -151,7 +176,7 @@ frappe.ready(async () => {
   try {
     if (!token && !staffInvitation && !publicEvent) {root.innerHTML = '<div class="rsvp-card"><h1>Your invitation awaits</h1><p>Open the private invitation link sent by your organiser.</p></div>'; return;}
     state = registering ? await api("get_registration", {event:publicEvent}) : await api(staffInvitation ? "staff_invitation" : "get_invitation", staffInvitation ? {invitation: staffInvitation} : {token});
-    if (state.event.event_page_url && !staffInvitation) {
+    if (state.event.event_page_url && !staffInvitation && !showConfirmation()) {
       const destination = new URL(state.event.event_page_url, window.location.href);
       if (destination.origin === window.location.origin && destination.pathname !== window.location.pathname) {
         destination.hash = token || "";

@@ -57,6 +57,17 @@ class EmailContent(unittest.TestCase):
         self.assertIn("Waitlisted places: 1", body)
         self.assertNotIn("Please confirm your attendance by", body)
 
+    def test_custom_confirmation_email_subject(self):
+        self.event.confirmation_email_subject = "  Your anniversary pass\r\nTCC & Guests  "
+        subject, body = self.render("Confirmation")
+        self.assertEqual(subject, "Your anniversary pass TCC & Guests")
+        self.assertIn("<title>Your anniversary pass TCC &amp; Guests</title>", body)
+        self.assertEqual(self.render("Invitation")[0], "Your Invitation | Installation & Dinner")
+        self.assertEqual(self.render("Reminder")[0], "RSVP Reminder | Installation & Dinner")
+
+        self.event.confirmation_email_subject = " "
+        self.assertEqual(self.render("Confirmation")[0], "Your RSVP Confirmation | Installation & Dinner")
+
     def test_reminder_and_optional_details(self):
         self.event.host_name = None
         self.event.description = None

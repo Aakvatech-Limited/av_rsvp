@@ -159,6 +159,12 @@ The guest directory is a shared resource for event managers. Event team rows mus
 
 ## Email behaviour
 
+Under **RSVP Event → Confirmation**, **Confirmation Email Subject** sets the subject of future response confirmation emails. Leave it blank to use the standard subject.
+
+Enable **Show Only Confirmation Message and QR Code** to replace the guest form once all requested places are confirmed. Guests see their message above their entry QR codes. Contact the organiser to change a confirmed response. The optional **Confirmation Message** accepts plain text and the placeholders `{guest_name}`, `{event_title}`, `{event_date}`, and `{event_time}`. The date and time follow the event timezone.
+
+Existing custom Event Web Pages have their own copy of the RSVP script. Bring over the confirmation changes from `av_rsvp/www/rsvp.js` into their Script field to enable the same display on those pages.
+
 Invitation message logs stay **Queued** until the linked Frappe Email Queue reports **Sent**. Hourly reconciliation updates the app log. Sent means accepted by the mail transport, not proven delivery or reading. SMTP retries remain managed by Frappe's Email Queue.
 
 Automatic reminders are disabled initially. Enable them in RSVP Settings and choose the interval. Reminders target unanswered invitations previously sent by email, while the event is published and before its deadline. Bulk send actions deduplicate per purpose/invitation/day.

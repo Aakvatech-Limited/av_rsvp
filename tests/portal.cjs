@@ -144,6 +144,38 @@ const fixture = {
       assert.equal(new URL(page.url()).hash,'#'+'b'.repeat(64));
       assert.deepEqual(errors,[]);
       await page.screenshot({path:`/tmp/rsvp-portal-${publicMode?"public":"private"}-${viewport.width}.png`,fullPage:true});
+
+      await page.evaluate(() => {
+        const state = window.testState;
+        window.history.replaceState(null, "", "/rsvp#" + "b".repeat(64));
+        Object.assign(state.event, {show_confirmation_pass_only: 1, event_page_url: null});
+        state.invitation.guest_name = "Jacob";
+        state.attendees[0].entry_qr = "data:image/png;base64,iVBORw0KGgo=";
+        state.attendees[0].functions[0].allocation = "Waitlisted";
+      });
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      assert.equal(await page.locator("#response-form").count(), 1);
+      assert.equal(await page.getByText("Waitlisted", {exact: true}).count(), 1);
+
+      await page.evaluate(() => {
+        const state = window.testState;
+        state.event.event_page_url = "https://rsvp.test/events/custom-event";
+        state.attendees[0].functions[0].allocation = "Confirmed";
+      });
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      assert.equal(await page.locator("#rsvp-root p").innerText(),
+        "Hello Jacob, we are pleased to confirm your participation in the Annual Reception on January 10, 2027 at 6:00 PM.");
+      assert.equal(await page.getByRole("img", {name: "Entry QR code for Custom Page Guest"}).count(), 1);
+      assert.equal(await page.locator("#response-form, .rsvp-brand, footer").count(), 0);
+      assert.equal(new URL(page.url()).pathname, "/rsvp");
+
+      await page.evaluate(() => {
+        window.testState.event.confirmation_message = "Welcome {guest_name}! <b>{event_title}</b>";
+      });
+      await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      assert.equal(await page.locator("#rsvp-root p").innerText(), "Welcome Jacob! <b>Annual Reception</b>");
+      assert.equal(await page.locator("#rsvp-root b").count(), 0);
+      assert.deepEqual(errors, []);
       await page.close();
     }
     }

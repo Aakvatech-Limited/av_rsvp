@@ -41,7 +41,8 @@ def email_content(
     footer = event_text(event.get("footer_text") or "").strip()
     body = paragraph(f"Dear {text(invitation.guest_name)},")
     if purpose == "Confirmation":
-        subject = f"Your RSVP Confirmation | {event.event_title}"
+        custom_subject = " ".join((event.get("confirmation_email_subject") or "").splitlines()).strip()
+        subject = custom_subject or f"Your RSVP Confirmation | {event.event_title}"
         body += paragraph(f"Thank you for responding to <strong>{title}</strong>.")
         body += paragraph(
             f"Your response: <strong>{text(invitation.response_status)}</strong>.<br>"
