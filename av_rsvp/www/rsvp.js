@@ -74,12 +74,17 @@ frappe.ready(async () => {
   }
   function eventInformation(e) {
     if (sectionHidden("Event Information")) return "";
+    const guestName = state.invitation.guest_name;
+    const invitationGreeting = e.invitation_greeting?.trim() || "Hello {{ guest_name }}, we would love to have you with us.";
+    const greeting = registering
+      ? "Register for this event. No account is required."
+      : invitationGreeting.replace(/\{\{\s*guest_name\s*\}\}/g, () => guestName);
     const template = document.querySelector?.("template[data-rsvp-event-information]");
     if (template) {
       const holder = document.createElement("div");
       holder.appendChild(template.content.cloneNode(true));
       const values = {...e,
-        greeting: registering ? "Register for this event. No account is required." : `Hello ${state.invitation.guest_name}, we would love to have you with us.`,
+        greeting,
         starts_on_display:date(e.starts_on), ends_on_display:date(e.ends_on),
         deadline_text:`Please respond by ${date(e.rsvp_deadline)}.`,
         allowance_text:`${registering ? "Each registration allows" : "Your invitation allows"} ${state.invitation.max_attendees} people, including you.`
@@ -90,7 +95,7 @@ frappe.ready(async () => {
       holder.querySelectorAll("[data-rsvp-link]").forEach(node=>{const value=node.dataset.rsvpLink === "map_url" ? e.map_url : "";if(value)node.setAttribute("href",value);else node.hidden=true;});
       return holder.innerHTML;
     }
-    return `<section class="rsvp-card">${e.banner ? `<img class="rsvp-banner" src="${esc(e.banner)}" alt="">` : ""}<div class="rsvp-eyebrow">${esc(e.host_name || "You're invited")}</div><h1>${esc(e.event_title)}</h1>${registering ? "<p>Register for this event. No account is required.</p>" : `<p>Hello ${esc(state.invitation.guest_name)}, we would love to have you with us.</p>`}<div class="rsvp-multiline">${e.description || ""}</div>
+    return `<section class="rsvp-card">${e.banner ? `<img class="rsvp-banner" src="${esc(e.banner)}" alt="">` : ""}<div class="rsvp-eyebrow">${esc(e.host_name || "You're invited")}</div><h1>${esc(e.event_title)}</h1><p class="rsvp-multiline">${esc(greeting)}</p><div class="rsvp-multiline">${e.description || ""}</div>
       <div class="rsvp-meta"><span>${esc(date(e.starts_on))}</span><span>${esc(e.venue)}</span><span>${esc(e.timezone)}</span></div>${e.map_url ? `<a href="${esc(e.map_url)}" target="_blank" rel="noopener noreferrer">Get directions ↗</a>` : ""}
       <p class="rsvp-muted">Please respond by ${esc(date(e.rsvp_deadline))}. ${registering ? "Each registration allows" : "Your invitation allows"} ${esc(state.invitation.max_attendees)} people, including you.</p>${staffInvitation ? '<div class="rsvp-notice">Organiser entry: this response will record your signed-in user.</div>' : ""}<p class="rsvp-muted">${esc(e.contact_email || "")} ${esc(e.contact_phone || "")}</p></section>`;
   }

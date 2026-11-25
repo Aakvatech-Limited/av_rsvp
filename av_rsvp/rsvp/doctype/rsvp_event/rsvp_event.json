@@ -8,8 +8,10 @@
  "field_order": [
   "event_title",
   "status",
+  "event_information",
   "host_name",
   "banner",
+  "invitation_greeting",
   "description",
   "footer_text",
   "schedule",
@@ -63,6 +65,11 @@
    "search_index": 1
   },
   {
+   "fieldname": "event_information",
+   "label": "Event Information",
+   "fieldtype": "Section Break"
+  },
+  {
    "fieldname": "host_name",
    "label": "Host Name",
    "fieldtype": "Data"
@@ -71,6 +78,12 @@
    "fieldname": "banner",
    "label": "Banner",
    "fieldtype": "Attach Image"
+  },
+  {
+   "fieldname": "invitation_greeting",
+   "label": "Invitation Greeting",
+   "fieldtype": "Small Text",
+   "description": "Optional plain text for the private RSVP page. Use {{ guest_name }} to insert the invitee’s name. Leave blank to use the standard greeting."
   },
   {
    "fieldname": "description",

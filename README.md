@@ -82,6 +82,8 @@ Open **RSVP Event → Guest Form**:
 
 Answers are saved under **RSVP Invitation → Additional Answers** and restored when the guest reopens their private link or staff record a response. Removed questions retain their historical answers in Desk but are no longer exposed on the guest form. Hiding dietary preferences similarly keeps existing stored values without returning them to guests. Dietary visibility and additional guests remain enabled by default to preserve existing event behaviour.
 
+Under **RSVP Event → Event Information**, set **Invitation Greeting** to customise the greeting on private RSVP links. Enter plain text and use `{{ guest_name }}` to insert the invitee’s name. Leave it blank to keep the standard greeting. Previously created Event Web Pages need the updated RSVP script in their Script field to use this setting.
+
 ## Editable Web Page per event
 
 On a saved Event, use **Guest Form → Create Event Web Page**. This creates a draft **standard Frappe Web Page** with its own HTML, CSS and JavaScript, linked under Event Website. Creation/editing uses normal Website Manager permissions in addition to event access.

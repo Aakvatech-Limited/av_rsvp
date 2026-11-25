@@ -87,6 +87,7 @@ def snapshot(invitation, event):
     return dict(
         event=details
         | {
+            "invitation_greeting": event.get("invitation_greeting"),
             "show_confirmation_pass_only": event.get("show_confirmation_pass_only"),
             "confirmation_message": event.get("confirmation_message"),
             "confirmation_text": confirmation_page_message(

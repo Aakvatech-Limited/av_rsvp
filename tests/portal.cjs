@@ -27,17 +27,31 @@ const fixture = {
             window.testState.invitation.response_status=args.response;
             window.testState.additional_answers=JSON.parse(args.additional_answers || "{}");
           }
-          if(method.endsWith('.register')) return {message:{token:'b'.repeat(64),registration:structuredClone(window.testState)}};
+          if(method.endsWith('.register')) {
+            window.testState.invitation.guest_name=args.guest_name;
+            return {message:{token:'b'.repeat(64),registration:structuredClone(window.testState)}};
+          }
           return {message:structuredClone(window.testState)};
         }};
       },{data:fixture,publicMode});
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       await page.getByRole('heading',{name:'Annual Reception'}).waitFor();
-      const description=page.locator('.rsvp-multiline').first();
+      const greeting=page.locator('[data-form-section="Event Information"] .rsvp-card > p').first();
+      assert.equal(await greeting.innerText(), publicMode
+        ? 'Register for this event. No account is required.'
+        : 'Hello Asha, we would love to have you with us.');
+      const description=page.locator('[data-form-section="Event Information"] .rsvp-card > div.rsvp-multiline');
       assert.equal(await description.evaluate(el=>getComputedStyle(el).whiteSpace),'pre-line');
       assert.equal((await description.innerText()).replace(/\r\n/g,'\n'),fixture.event.description.replace(/\r\n/g,'\n'));
-      await page.evaluate(()=>{window.testState.event.form_sections=['Response','Additional Questions','Contact Details','Guest Details','Message to Organiser'];});
+      await page.evaluate(()=>{
+        window.testState.event.form_sections=['Response','Additional Questions','Contact Details','Guest Details','Message to Organiser'];
+        window.testState.event.invitation_greeting='Welcome {{ guest_name }}! <b>Annual Reception</b>';
+      });
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
+      assert.equal(await greeting.innerText(), publicMode
+        ? 'Register for this event. No account is required.'
+        : 'Welcome Asha! <b>Annual Reception</b>');
+      assert.equal(await greeting.locator('b').count(),0);
       const sectionOrder=await page.locator('[data-form-section]').evaluateAll(nodes=>nodes.map(n=>n.dataset.formSection));
       assert.deepEqual(sectionOrder,['Event Information','Response','Additional Questions','Contact Details','Guest Details','Message to Organiser']);
       assert.ok(await page.locator('#overall').evaluate(input=>Boolean(input.compareDocumentPosition(document.querySelector('#save-response')) & Node.DOCUMENT_POSITION_FOLLOWING)));
@@ -120,11 +134,14 @@ const fixture = {
       // A native per-event Web Page can change its HTML and preserve authored visibility.
       await page.evaluate(()=>{
         const template=document.createElement('template');template.setAttribute('data-rsvp-event-information','');
-        template.innerHTML='<section class="rsvp-card"><h1 data-rsvp-text="event_title"></h1><p class="custom-copy">Our customised event</p><p hidden data-rsvp-text="venue"></p><div data-rsvp-html="description"></div></section>';
+        template.innerHTML='<section class="rsvp-card"><h1 data-rsvp-text="event_title"></h1><p class="custom-copy">Our customised event</p><p data-rsvp-text="greeting"></p><p hidden data-rsvp-text="venue"></p><div data-rsvp-html="description"></div></section>';
         document.body.appendChild(template);window.testState.event.hidden_sections=[];
       });
       await page.addScriptTag({content:fs.readFileSync(path.join(root,'av_rsvp/www/rsvp.js'),'utf8')});
       assert.equal(await page.locator('.custom-copy').innerText(),'Our customised event');
+      assert.equal(await page.locator('[data-rsvp-text="greeting"]').innerText(), publicMode
+        ? 'Welcome New Guest! <b>Annual Reception</b>'
+        : 'Welcome Asha! <b>Annual Reception</b>');
       assert.equal(await page.locator('[data-rsvp-text="venue"]').isVisible(),false);
       assert.equal(await page.getByRole('heading',{name:'Annual Reception',exact:true}).count(),1);
       // Register from an event-specific page with no event query parameter.
