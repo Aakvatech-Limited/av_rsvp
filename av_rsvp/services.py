@@ -245,9 +245,9 @@ def apply_response(
             else None
         )
         dietary_choices = choices(event.dietary_options) if event.show_dietary_preferences else []
+        allowed_dietary_choices = {"", *dietary_choices}
         if dietary_choices and any(
-            p.get("dietary_requirements", "").strip()
-            and p["dietary_requirements"].strip() not in dietary_choices
+            (p.get("dietary_requirements") or "").strip() not in allowed_dietary_choices
             for p in (people[1:] if event.hide_first_guest_details else people)
         ):
             raise ValueError("Choose a dietary preference from the event options, or leave it empty.")
@@ -305,7 +305,8 @@ def apply_response(
             for key in ["attendee_name", "age_group", "dietary_requirements", "accessibility_requests"]:
                 if key == "dietary_requirements" and not event.show_dietary_preferences:
                     continue
-                doc.set(key, person.get(key, "Adult" if key == "age_group" else "").strip())
+                value = person.get(key, "Adult" if key == "age_group" else "")
+                doc.set(key, (value or "").strip())
             doc.active = 1
             save_doc(doc)
             person["name"] = doc.name

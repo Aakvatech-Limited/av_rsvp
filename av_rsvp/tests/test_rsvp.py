@@ -335,6 +335,26 @@ class TestRSVP(IntegrationTestCase):
         result = apply_response(self.invitation.name, "Attending", self.people(attendee=attendee))
         self.assertEqual(result["attendees"][0].dietary_requirements, "")
 
+    def test_blank_optional_attendee_details_can_be_resubmitted(self):
+        self.event.hide_first_guest_details = 1
+        self.event.show_dietary_preferences = 1
+        self.event.dietary_options = "Vegetarian\nStandard"
+        self.event.save()
+        result = apply_response(self.invitation.name, "Attending", [])
+        primary = result["attendees"][0].name
+        optional_details = {"dietary_requirements": None, "accessibility_requests": None}
+        frappe.db.set_value("RSVP Attendee", primary, optional_details)
+
+        people = self.people(attendee=primary) + self.people("Extra")
+        people[1].update(optional_details)
+        result = apply_response(self.invitation.name, "Attending", people)
+
+        self.assertEqual(len(result["attendees"]), 2)
+        self.assertEqual(result["attendees"][0].name, primary)
+        for attendee in result["attendees"]:
+            self.assertEqual(attendee.dietary_requirements, "")
+            self.assertEqual(attendee.accessibility_requests, "")
+
     def test_disabled_additional_guests_enforced_for_private_and_public(self):
         self.open_registration()
         self.event.allow_additional_guests = 0

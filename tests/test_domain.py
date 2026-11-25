@@ -52,6 +52,20 @@ class BookingRules(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_people([person], 1, functions, False)
 
+    def test_optional_attendee_text_limits(self):
+        functions = {"dinner": {"meal_options": "Vegetarian"}}
+        for key, label in (
+            ("dietary_requirements", "Dietary preference"),
+            ("accessibility_requests", "Accessibility requests"),
+        ):
+            for value in (None, "", "x" * 1000):
+                with self.subTest(field=key, value_type=type(value), valid=True):
+                    validate_people([self.person(**{key: value})], 1, functions, True)
+            for value in ("x" * 1001, "x\x00", 0):
+                with self.subTest(field=key, value_type=type(value), valid=False):
+                    with self.assertRaisesRegex(ValueError, f"{label} for attendee 2.*1000 characters"):
+                        validate_people([self.person(), self.person(**{key: value})], 2, functions, True)
+
     def test_malformed_payload(self):
         for people in [None, "bad", [{}], [None]]:
             with self.assertRaises(ValueError):
