@@ -34,6 +34,10 @@
   "form_sections",
   "contact_email",
   "contact_phone",
+  "confirmation",
+  "show_confirmation_pass_only",
+  "confirmation_message",
+  "confirmation_email_subject",
   "team",
   "privacy_notice",
   "event_website",
@@ -155,6 +159,31 @@
    "fieldname": "contact_phone",
    "label": "Contact Phone",
    "fieldtype": "Data"
+  },
+  {
+   "fieldname": "confirmation",
+   "label": "Confirmation",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "show_confirmation_pass_only",
+   "label": "Show Only Confirmation Message and QR Code",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Replace the guest form with the confirmation message and entry QR codes once all requested places are confirmed."
+  },
+  {
+   "fieldname": "confirmation_message",
+   "label": "Confirmation Message",
+   "fieldtype": "Small Text",
+   "depends_on": "eval:doc.show_confirmation_pass_only",
+   "description": "Optional plain text. Use {guest_name}, {event_title}, {event_date}, and {event_time} to personalize the message."
+  },
+  {
+   "fieldname": "confirmation_email_subject",
+   "label": "Confirmation Email Subject",
+   "fieldtype": "Data",
+   "description": "Optional subject for response confirmation emails. Leave blank to use the standard subject."
   },
   {
    "fieldname": "team",

@@ -83,7 +83,11 @@ def snapshot(invitation, event):
             function[key] = display_datetime(function[key], event.timezone)
     # Explicit projection: no team, guest directory, delivery logs or invitation secrets.
     return dict(
-        event=public_event_details(event),
+        event=public_event_details(event)
+        | {
+            "show_confirmation_pass_only": event.get("show_confirmation_pass_only"),
+            "confirmation_message": event.get("confirmation_message"),
+        },
         notes=invitation.notes if "Message to Organiser" not in hidden_sections(event.form_sections) else "",
         additional_answers={
             row.question_key: row.answer
