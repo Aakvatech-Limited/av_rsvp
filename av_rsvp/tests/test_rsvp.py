@@ -235,6 +235,32 @@ class TestRSVP(IntegrationTestCase):
             self.assertFalse(queue_message(self.invitation, "Invitation", "one-test-delivery"))
             self.assertEqual(enqueue.call_count, 1)
 
+    def test_message_preview_uses_saved_content_without_queueing(self):
+        self.event.show_confirmation_pass_only = 1
+        self.event.confirmation_message = "Hello {guest_name}, welcome to {event_title}."
+        self.event.confirmation_email_subject = "Your event pass"
+        self.event.save()
+        logs = frappe.db.count("RSVP Message Log", {"event": self.event.name})
+
+        sample = api.preview_messages(event=self.event.name)
+        self.assertIn("Sample Guest", sample["invitation"]["body"])
+        self.assertIn('href="#preview"', sample["invitation"]["body"])
+        self.assertEqual(sample["confirmation"]["subject"], "Your event pass")
+
+        host = self.make_review_user("Event Host")
+        frappe.set_user(host)
+        with self.assertRaises(frappe.PermissionError):
+            api.preview_messages(invitation=self.invitation.name)
+        frappe.set_user("Administrator")
+        self.event.append("team", {"user": host, "access_level": "Event Host"})
+        self.event.save()
+        frappe.set_user(host)
+        preview = api.preview_messages(invitation=self.invitation.name)
+        self.assertIn("Asha", preview["invitation"]["body"])
+        self.assertEqual(preview["guest_confirmation"]["message"], "Hello Asha, welcome to Test reception.")
+        self.assertNotIn(self.invitation.token_hash, str(preview))
+        self.assertEqual(frappe.db.count("RSVP Message Log", {"event": self.event.name}), logs)
+
     def test_portal_and_calendar_convert_site_timestamps(self):
         from zoneinfo import ZoneInfo
 

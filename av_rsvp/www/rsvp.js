@@ -114,21 +114,10 @@ frappe.ready(async () => {
   function render(saved = false) {
     const e = state.event;
     if (showConfirmation()) {
-      const start = new Date(e.starts_on.replace(" ", "T") + "Z");
-      // The server already converted this wall time to the event timezone.
-      const values = {
-        guest_name: state.invitation.guest_name,
-        event_title: e.event_title,
-        event_date: start.toLocaleDateString("en-US", {dateStyle: "long", timeZone: "UTC"}),
-        event_time: start.toLocaleTimeString("en-US", {timeStyle: "short", timeZone: "UTC"}),
-      };
-      const template = e.confirmation_message?.trim()
-        || "Hello {guest_name}, we are pleased to confirm your participation in the {event_title} on {event_date} at {event_time}.";
-      const message = template.replace(/\{(guest_name|event_title|event_date|event_time)\}/g, (_, key) => values[key]);
       root.closest(".rsvp-shell")?.querySelectorAll(":scope > .rsvp-brand, :scope > footer")
         .forEach(node => node.remove());
       const passes = state.attendees.filter(person => person.entry_qr);
-      root.innerHTML = `<section class="rsvp-card text-center"><p class="rsvp-multiline">${esc(message)}</p>
+      root.innerHTML = `<section class="rsvp-card text-center"><p class="rsvp-multiline">${esc(e.confirmation_text)}</p>
         ${passes.map(person => `<img src="${esc(person.entry_qr)}" width="150" height="150" alt="Entry QR code for ${esc(person.attendee_name)}">`).join("")}</section>`;
       return;
     }

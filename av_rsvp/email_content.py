@@ -2,10 +2,27 @@
 
 from datetime import datetime
 from html import escape
+from re import sub
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 from av_rsvp.text import event_text
+
+
+def confirmation_page_message(template, guest_name, event_title, starts_on):
+    start = datetime.fromisoformat(str(starts_on))
+    values = {
+        "guest_name": guest_name,
+        "event_title": event_title,
+        "event_date": f"{start:%B} {start.day}, {start.year}",
+        "event_time": f"{start.hour % 12 or 12}:{start.minute:02d} {'AM' if start.hour < 12 else 'PM'}",
+    }
+    return sub(
+        r"\{(guest_name|event_title|event_date|event_time)\}",
+        lambda match: values[match[1]],
+        (template or "").strip()
+        or "Hello {guest_name}, we are pleased to confirm your participation in the {event_title} on {event_date} at {event_time}.",
+    )
 
 
 def email_content(

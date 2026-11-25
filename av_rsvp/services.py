@@ -4,6 +4,7 @@ import frappe
 from frappe.utils import cint, get_datetime, now_datetime
 
 from av_rsvp.domain import allocation_for, clean_text, validate_people
+from av_rsvp.email_content import confirmation_page_message
 from av_rsvp.questions import choices, hidden_sections, section_order, validate_answers
 from av_rsvp.security import (
     current_count,
@@ -81,12 +82,21 @@ def snapshot(invitation, event):
     for function in functions:
         for key in ["starts_on", "ends_on"]:
             function[key] = display_datetime(function[key], event.timezone)
+    details = public_event_details(event)
     # Explicit projection: no team, guest directory, delivery logs or invitation secrets.
     return dict(
-        event=public_event_details(event)
+        event=details
         | {
             "show_confirmation_pass_only": event.get("show_confirmation_pass_only"),
             "confirmation_message": event.get("confirmation_message"),
+            "confirmation_text": confirmation_page_message(
+                event.get("confirmation_message"),
+                invitation.guest_name,
+                event.event_title,
+                details["starts_on"],
+            )
+            if event.get("show_confirmation_pass_only")
+            else None,
         },
         notes=invitation.notes if "Message to Organiser" not in hidden_sections(event.form_sections) else "",
         additional_answers={

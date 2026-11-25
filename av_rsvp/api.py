@@ -147,6 +147,51 @@ def renew_invitation(invitation):
 
 
 @frappe.whitelist(methods=["POST"])
+def preview_messages(event=None, invitation=None):
+    from frappe.utils import get_system_timezone
+    from frappe.utils.print_format_generator import get_qr_code
+
+    from av_rsvp.email_content import confirmation_page_message, email_content
+    from av_rsvp.security import display_datetime
+    from av_rsvp.urls import public_url
+
+    if bool(event) == bool(invitation):
+        frappe.throw("Choose an event or an invitation to preview.")
+    private_response()
+    if invitation:
+        doc = frappe.get_doc("RSVP Invitation", invitation)
+        require_overview(doc.event)
+        doc.check_permission("read")
+        event, guest_name = doc.event, doc.guest_name
+    else:
+        require_event(event)
+        guest_name = "Sample Guest"
+
+    doc = frappe.get_doc("RSVP Event", event)
+    if not invitation:
+        doc.check_permission("read")
+    sample = frappe._dict(guest_name=guest_name, response_status="Attending")
+    banner_url = public_url(doc.banner) if doc.banner else None
+    previews = {}
+    for key, purpose in (("invitation", "Invitation"), ("confirmation", "Confirmation")):
+        subject, body = email_content(
+            sample, doc, purpose, "#preview", get_system_timezone(), confirmed=1, banner_url=banner_url
+        )
+        previews[key] = {"subject": subject, "body": body}
+    if doc.show_confirmation_pass_only:
+        previews["guest_confirmation"] = {
+            "message": confirmation_page_message(
+                doc.get("confirmation_message"),
+                guest_name,
+                doc.event_title,
+                display_datetime(doc.starts_on, doc.timezone),
+            ),
+            "qr": get_qr_code("AV RSVP preview only"),
+        }
+    return previews
+
+
+@frappe.whitelist(methods=["POST"])
 @retry_transaction
 def send_invitations(event, pending_only=0):
     from av_rsvp.messaging import queue_message
