@@ -623,6 +623,65 @@ class TestRSVP(IntegrationTestCase):
         self.assertNotIn("email", str(data))
         self.assertFalse(frappe.has_permission("RSVP Event", "read", self.event))
 
+    def test_host_invitations_and_attendees_are_read_only_and_event_scoped(self):
+        host = self.make_review_user("Event Host")
+        other_event = frappe.copy_doc(self.event)
+        other_event.event_title = "Unassigned reception"
+        other_event.insert()
+        other_function = frappe.db.get_value("RSVP Function", {"event": other_event.name})
+        foreign_invitation = frappe.get_doc(
+            dict(doctype="RSVP Invitation", event=other_event.name, guest=self.invitation.guest)
+        ).insert()
+        own_people = self.people()
+        own_people[0]["accessibility_requests"] = "Step-free access"
+        own_result = apply_response(self.invitation.name, "Attending", own_people)
+        other_people = self.people()
+        other_people[0]["functions"][0]["function"] = other_function
+        foreign_result = apply_response(foreign_invitation.name, "Attending", other_people)
+        own_attendee = frappe.get_doc("RSVP Attendee", own_result["attendees"][0]["name"])
+        foreign_attendee = frappe.get_doc("RSVP Attendee", foreign_result["attendees"][0]["name"])
+
+        self.event.append("team", {"user": host, "access_level": "Event Host"})
+        self.event.save()
+        frappe.set_user(host)
+        self.assertEqual(access_level(self.event.name), 0)
+        self.assertTrue(api.event_overview(self.event.name)["read_only_host"])
+        with self.assertRaises(frappe.PermissionError):
+            api.event_overview(other_event.name)
+
+        for own, foreign in [(self.invitation, foreign_invitation), (own_attendee, foreign_attendee)]:
+            with self.subTest(doctype=own.doctype):
+                self.assertEqual(frappe.get_list(own.doctype, pluck="name"), [own.name])
+                own.check_permission("read")
+                with self.assertRaises(frappe.PermissionError):
+                    foreign.check_permission("read")
+                for ptype in ("write", "create", "delete", "share", "export", "report", "email", "print"):
+                    self.assertFalse(frappe.has_permission(own.doctype, ptype, own))
+
+        invite_form = frappe.get_doc("RSVP Invitation", self.invitation.name)
+        invite_form.apply_fieldlevel_read_permissions()
+        self.assertFalse(invite_form.get("access_nonce"))
+        self.assertFalse(invite_form.get("token_hash"))
+        attendee_form = frappe.get_doc("RSVP Attendee", own_attendee.name)
+        attendee_form.apply_fieldlevel_read_permissions()
+        self.assertFalse(attendee_form.get("entry_nonce"))
+        self.assertFalse(attendee_form.get("accessibility_requests"))
+
+        for action in (api.staff_invitation, api.share_invitation, api.revoke_invitation):
+            with self.assertRaises(frappe.PermissionError):
+                action(self.invitation.name)
+        with self.assertRaises(frappe.PermissionError):
+            api.record_response(self.invitation.name, "Declined", "[]")
+
+        frappe.set_user("Administrator")
+        self.event.set("team", [])
+        self.event.save()
+        frappe.set_user(host)
+        self.assertEqual(frappe.get_list("RSVP Invitation", pluck="name"), [])
+        self.assertEqual(frappe.get_list("RSVP Attendee", pluck="name"), [])
+        self.assertFalse(frappe.has_permission("RSVP Invitation", "read", self.invitation))
+        self.assertFalse(frappe.has_permission("RSVP Attendee", "read", own_attendee))
+
     def make_review_user(self, role):
         user = frappe.get_doc(
             dict(

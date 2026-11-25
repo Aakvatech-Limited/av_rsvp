@@ -20,6 +20,14 @@ frappe.pages["event-host"].on_page_load = function (wrapper) {
     body.find("#host-prev").on("click", () => {pageNumber--; load();});
     body.find("#host-next").on("click", () => {pageNumber++; load();});
   }
+  for (const [label, doctype] of [["Invitations", "RSVP Invitation"], ["Attendees", "RSVP Attendee"]]) {
+    page.add_inner_button(__(label), () => {
+      const selected = event.get_value();
+      if (!selected) return;
+      frappe.route_options = {event: selected};
+      frappe.set_route("List", doctype);
+    });
+  }
   page.add_inner_button(__("Post-Event Dashboard"), () => {frappe.route_options = {event: event.get_value()}; frappe.set_route("rsvp-post-event-dashboard");});
   page.add_inner_button(__("Refresh"), load);
   api("host_events").then(events => {
