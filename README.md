@@ -150,12 +150,14 @@ Waiting-list promotion is FIFO **per person per function**. A family can be part
 | Event Manager | Own events and events assigned at manager level; guest directory and event setup |
 | Event Coordinator | Assigned-event invitation viewing, response entry, communications and reports |
 | Check-in Operator | Assigned-event function/attendee lookup and check-in; no dietary/accessibility fields |
-| Event Host | Read-only Event Overview for events specifically assigned with Event Host access; no organizer dashboard or general guest-directory access |
+| Event Host | Read-only Event Overview, RSVP Invitations and RSVP Attendees for events assigned with Event Host access |
 | Public guest | Opted-in public event registration, or their private invitation through purpose-built endpoints |
 
 The organizer dashboard is available to Event Manager and Event Coordinator on eligible events, as well as app administrators. Assigning a role alone is not sufficient to view another organizer's events.
 
 The guest directory is a shared resource for event managers. Event team rows must be paired with matching user roles. Coordinators should use response-entry and communication actions; managers maintain the guest directory and create/edit invitation details.
+
+On the **Event Host** page, choose an event and click **Invitations** or **Attendees** to open its standard list. Access is set by the Event Host row in the event's Team table. Hosts can view the records but cannot record responses, share invitation links, or see restricted dietary and accessibility fields.
 
 ## Email behaviour
 

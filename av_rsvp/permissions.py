@@ -2,6 +2,7 @@ import frappe
 
 ADMIN_ROLES = {"System Manager", "RSVP Administrator"}
 LEVELS = {"Event Manager": 3, "Event Coordinator": 2, "Check-in Operator": 1}
+HOST_READ_DOCTYPES = {"RSVP Invitation", "RSVP Attendee"}
 
 
 def is_admin(user=None):
@@ -70,7 +71,9 @@ def document_access(doc, user=None, ptype=None):
     minimum = 1 if doc.doctype in {"RSVP Function", "RSVP Check-in", "RSVP Event"} else 2
     if ptype in {"write", "create", "delete"}:
         minimum = 3 if doc.doctype in {"RSVP Event", "RSVP Function"} else 2
-    return access_level(event, user) >= minimum
+    return access_level(event, user) >= minimum or (
+        doc.doctype in HOST_READ_DOCTYPES and ptype in {None, "read", "select"} and is_event_host(event, user)
+    )
 
 
 def query_for(doctype, user=None, minimum=1):
@@ -79,6 +82,8 @@ def query_for(doctype, user=None, minimum=1):
         return ""
     roles = set(frappe.get_roles(user))
     levels = [role for role, level in LEVELS.items() if level >= minimum and role in roles]
+    if doctype in HOST_READ_DOCTYPES and "Event Host" in roles:
+        levels.append("Event Host")
     if not levels:
         return "1=0"
     escaped = frappe.db.escape(user)
