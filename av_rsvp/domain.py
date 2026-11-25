@@ -30,15 +30,26 @@ def validate_people(people, maximum, functions, allow_maybe):
     if not isinstance(people, list) or len(people) > maximum:
         raise ValueError("The number of people exceeds this invitation's allowance.")
     seen = set()
-    for person in people:
+    for index, person in enumerate(people, start=1):
         if not isinstance(person, dict):
             raise ValueError("Invalid attendee.")
         if not clean_text(person.get("attendee_name", "")):
             raise ValueError("An attendee name is required.")
         if person.get("age_group", "Adult") not in {"Adult", "Child"}:
             raise ValueError("Choose Adult or Child.")
-        for key in ("dietary_requirements", "accessibility_requests"):
-            clean_text(person.get(key, ""), 1000)
+        for key, label in (
+            ("dietary_requirements", "Dietary preference"),
+            ("accessibility_requests", "Accessibility requests"),
+        ):
+            value = person.get(key)
+            if value is None:
+                continue
+            try:
+                clean_text(value, 1000)
+            except ValueError as error:
+                raise ValueError(
+                    f"{label} for attendee {index} must be valid text of at most 1000 characters."
+                ) from error
         if person.get("name"):
             if person["name"] in seen:
                 raise ValueError("An attendee appears more than once.")
