@@ -648,6 +648,8 @@ class TestRSVP(IntegrationTestCase):
         self.assertTrue(api.event_overview(self.event.name)["read_only_host"])
         with self.assertRaises(frappe.PermissionError):
             api.event_overview(other_event.name)
+        with self.assertRaises(frappe.PermissionError):
+            api.resend_invitation(foreign_invitation.name)
 
         for own, foreign in [(self.invitation, foreign_invitation), (own_attendee, foreign_attendee)]:
             with self.subTest(doctype=own.doctype):
@@ -681,6 +683,44 @@ class TestRSVP(IntegrationTestCase):
         self.assertEqual(frappe.get_list("RSVP Attendee", pluck="name"), [])
         self.assertFalse(frappe.has_permission("RSVP Invitation", "read", self.invitation))
         self.assertFalse(frappe.has_permission("RSVP Attendee", "read", own_attendee))
+
+    def test_assigned_host_can_resend_one_invitation(self):
+        from unittest.mock import patch
+
+        host = self.make_review_user("Event Host")
+        self.event.append("team", {"user": host, "access_level": "Event Host"})
+        self.event.save()
+        frappe.set_user(host)
+        with self.assertRaisesRegex(frappe.ValidationError, "no email address"):
+            api.resend_invitation(self.invitation.name)
+        with self.assertRaises(frappe.PermissionError):
+            api.send_invitations(self.event.name)
+
+        frappe.set_user("Administrator")
+        recipient = "resend@example.com"
+        frappe.db.set_value("RSVP Invitation", self.invitation.name, "email", recipient)
+        with patch("frappe.enqueue") as enqueue:
+            self.assertEqual(api.send_invitations(self.event.name)["queued"], 1)
+            frappe.set_user(host)
+            self.assertTrue(api.resend_invitation(self.invitation.name)["queued"])
+            self.assertFalse(api.resend_invitation(self.invitation.name)["queued"])
+            self.assertEqual(enqueue.call_count, 2)
+        recipients = frappe.get_all(
+            "RSVP Message Log",
+            filters={"invitation": self.invitation.name, "purpose": "Invitation"},
+            pluck="recipient",
+        )
+        self.assertEqual(recipients, [recipient, recipient])
+        self.assertEqual(
+            frappe.db.get_value("RSVP Invitation", self.invitation.name, "token_hash"),
+            self.invitation.token_hash,
+        )
+
+        frappe.set_user("Administrator")
+        frappe.db.set_value("RSVP Invitation", self.invitation.name, "revoked", 1)
+        frappe.set_user(host)
+        with self.assertRaisesRegex(frappe.ValidationError, "revoked"):
+            api.resend_invitation(self.invitation.name)
 
     def make_review_user(self, role):
         user = frappe.get_doc(

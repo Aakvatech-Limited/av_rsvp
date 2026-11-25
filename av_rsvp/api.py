@@ -173,6 +173,28 @@ def send_invitations(event, pending_only=0):
 
 @frappe.whitelist(methods=["POST"])
 @retry_transaction
+def resend_invitation(invitation):
+    from av_rsvp.messaging import queue_message
+
+    doc = frappe.get_doc("RSVP Invitation", invitation)
+    lock_event(doc.event)
+    require_overview(doc.event)
+    doc = current_doc("RSVP Invitation", invitation)
+    doc.check_permission("read")
+    if doc.revoked:
+        frappe.throw("This invitation has been revoked.")
+    if current_value("RSVP Event", doc.event, "status") != "Published":
+        frappe.throw("Publish the event before sending invitations.")
+    if not doc.email:
+        frappe.throw("This invitation has no email address.")
+
+    # An individual resend can follow the initial send on the same day.
+    key = f"Invitation:resend:{doc.name}:{now_datetime().date()}"
+    return {"queued": queue_message(doc, "Invitation", key)}
+
+
+@frappe.whitelist(methods=["POST"])
+@retry_transaction
 def promote(event):
     require_event(event, 2)
     lock_event(event)
