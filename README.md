@@ -157,7 +157,7 @@ The organizer dashboard is available to Event Manager and Event Coordinator on e
 
 The guest directory is a shared resource for event managers. Event team rows must be paired with matching user roles. Coordinators should use response-entry and communication actions; managers maintain the guest directory and create/edit invitation details.
 
-On the **Event Host** page, choose an event and click **Invitations** or **Attendees** to open its standard list. Access is set by the Event Host row in the event's Team table. Hosts can view the records but cannot record responses, share invitation links, or see restricted dietary and accessibility fields.
+On the **Event Host** page, choose an event and click **Invitations** or **Attendees** to open its standard list. Access is set by the Event Host row in the event's Team table. From an active invitation, choose **Resend Invitation** to queue an email to the address on the record. The action allows one individual resend per invitation per day, even if the original invitation was sent the same day. Hosts can view the records but cannot record responses, share invitation links directly, or see restricted dietary and accessibility fields.
 
 ## Email behaviour
 
