@@ -111,6 +111,14 @@ frappe.ready(async () => {
     const ordered = [...new Set([...configured, ...defaults])].filter(section=>Object.hasOwn(sections,section));
     return ordered.filter(section=>section !== "Footer Text" && !sectionHidden(section) && (editable || section === "Event Information" || section === "Response")).map(section=>`<div data-form-section="${esc(section)}">${sections[section]}</div>`).join("") + (editable ? `<section class="rsvp-card"><p class="rsvp-muted rsvp-multiline">${esc(e.privacy_notice || "Your information is used to organise this event. Share only the details needed for your attendance.")}</p><div class="rsvp-actions"><button type="submit" id="save-response">${registering ? "Register and save RSVP" : "Save response"}</button></div>${e.footer_text && !sectionHidden("Footer Text") ? `<div class="rsvp-multiline rsvp-footer-text">${e.footer_text}</div>` : ""}</section>` : (e.footer_text && !sectionHidden("Footer Text") ? `<section class="rsvp-card rsvp-multiline rsvp-footer-text">${e.footer_text}</section>` : ""));
   }
+  function calendarActions() {
+    const links = Object.entries(state.event.calendar_links || {});
+    if (!token || staffInvitation || !links.length) return "";
+    return `<div class="rsvp-actions">${links.map(([label, url]) => `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`).join("")}<button type="button" class="secondary" id="calendar">Apple / Other calendars (.ics)</button></div>`;
+  }
+  function bindCalendar() {
+    root.querySelector("#calendar")?.addEventListener("click", async () => { const file = await api("calendar", {token}); const url = URL.createObjectURL(new Blob([file.content], {type:"text/calendar;charset=utf-8"})); const a = document.createElement("a"); a.href=url; a.download=file.filename; a.click(); URL.revokeObjectURL(url); });
+  }
   function render(saved = false) {
     const e = state.event;
     if (showConfirmation()) {
@@ -118,14 +126,15 @@ frappe.ready(async () => {
         .forEach(node => node.remove());
       const passes = state.attendees.filter(person => person.entry_qr);
       root.innerHTML = `<section class="rsvp-card text-center"><p class="rsvp-multiline">${esc(e.confirmation_text)}</p>
-        ${passes.map(person => `<img src="${esc(person.entry_qr)}" width="150" height="150" alt="Entry QR code for ${esc(person.attendee_name)}">`).join("")}</section>`;
+        ${passes.map(person => `<img src="${esc(person.entry_qr)}" width="150" height="150" alt="Entry QR code for ${esc(person.attendee_name)}">`).join("")}${calendarActions()}</section>`;
+      bindCalendar();
       return;
     }
     root.innerHTML = `
       ${saved ? '<div class="rsvp-notice" role="status">Your response has been saved. Check each function’s confirmation status below.</div>' : ""}
       ${!state.editable ? '<div class="rsvp-notice">Online responses are closed. Contact the organiser for changes.</div>' : ""}
       ${state.editable ? `<form id="response-form">${formContent(e)}</form>` : formContent(e)}
-      ${state.attendees.length ? `<section class="rsvp-card"><h2>Your attendance details</h2>${state.attendees.map(p => `<div class="rsvp-pass">${p.entry_qr ? `<img src="${p.entry_qr}" alt="Entry QR code for ${esc(p.attendee_name)}">` : ""}<div><strong>${esc(p.attendee_name)}</strong>${p.functions.map(a => `<div>${esc(state.functions.find(f => f.name === a.function)?.function_title || "")} <span class="rsvp-badge">${esc(a.allocation)}</span></div>`).join("")}${p.entry_token ? '<small>Present this pass at the event.</small>' : ""}</div></div>`).join("")}<div class="rsvp-actions"><button type="button" class="secondary" id="print-passes">Print passes</button>${token ? '<button type="button" class="secondary" id="calendar">Add to calendar</button>' : ""}</div></section>` : ""}
+      ${state.attendees.length ? `<section class="rsvp-card"><h2>Your attendance details</h2>${state.attendees.map(p => `<div class="rsvp-pass">${p.entry_qr ? `<img src="${p.entry_qr}" alt="Entry QR code for ${esc(p.attendee_name)}">` : ""}<div><strong>${esc(p.attendee_name)}</strong>${p.functions.map(a => `<div>${esc(state.functions.find(f => f.name === a.function)?.function_title || "")} <span class="rsvp-badge">${esc(a.allocation)}</span></div>`).join("")}${p.entry_token ? '<small>Present this pass at the event.</small>' : ""}</div></div>`).join("")}<div class="rsvp-actions"><button type="button" class="secondary" id="print-passes">Print passes</button></div>${calendarActions()}</section>` : ""}
       `;
     root.querySelector("#add-person")?.addEventListener("click", () => {
       capture(); state.notes = root.querySelector("#notes")?.value || ""; state.invitation.response_status = root.querySelector("#overall").value;
@@ -160,7 +169,7 @@ frappe.ready(async () => {
       } catch (_) {error("Your response could not be saved. Review the message shown and try again."); button.disabled = false;}
     });
     root.querySelector("#print-passes")?.addEventListener("click", () => window.print());
-    root.querySelector("#calendar")?.addEventListener("click", async () => { const file = await api("calendar", {token}); const url = URL.createObjectURL(new Blob([file.content], {type:"text/calendar;charset=utf-8"})); const a = document.createElement("a"); a.href=url; a.download=file.filename; a.click(); URL.revokeObjectURL(url); });
+    bindCalendar();
   }
   try {
     if (!token && !staffInvitation && !publicEvent) {root.innerHTML = '<div class="rsvp-card"><h1>Your invitation awaits</h1><p>Open the private invitation link sent by your organiser.</p></div>'; return;}
