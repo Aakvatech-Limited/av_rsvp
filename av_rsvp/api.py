@@ -446,7 +446,11 @@ def calendar(token):
     from av_rsvp.calendar import calendar_content
 
     private_response()
-    _invitation, event = check_token(token)
+    invitation, event = check_token(token)
+    if not event.enable_add_to_calendar or invitation.response_status != "Attending" or not frappe.db.exists(
+        "RSVP Function Response", {"invitation": invitation.name, "allocation": "Confirmed"}
+    ):
+        frappe.throw("Calendar is available for confirmed attendance only.", frappe.PermissionError)
     from frappe.utils import get_system_timezone
 
     return {
