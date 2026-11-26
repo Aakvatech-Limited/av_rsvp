@@ -11,6 +11,9 @@ class Record(dict):
 class EmailContent(unittest.TestCase):
     def setUp(self):
         self.event = Record(
+            confirmation_email_subject="Your RSVP Confirmation | {event_title}",
+            confirmation_email_message="<p>Dear {guest_name},</p><p>Thank you for responding to <strong>{event_title}</strong>.</p><p>Your response: <strong>{response_status}</strong>.<br>Confirmed places across functions: {confirmed_places}.<br>Waitlisted places: {waitlisted_places}.</p>",
+            enable_add_to_calendar=1,
             event_title="Installation & Dinner",
             starts_on="2026-11-20 15:00:00",
             ends_on="2026-11-20 18:00:00",
@@ -77,7 +80,8 @@ class EmailContent(unittest.TestCase):
         self.assertEqual(self.render("Reminder")[0], "RSVP Reminder | Installation & Dinner")
 
         self.event.confirmation_email_subject = " "
-        self.assertEqual(self.render("Confirmation")[0], "Your RSVP Confirmation | Installation & Dinner")
+        with self.assertRaises(ValueError):
+            self.render("Confirmation")
 
     def test_reminder_and_optional_details(self):
         self.event.host_name = None
@@ -120,3 +124,15 @@ class EmailContent(unittest.TestCase):
     def test_unsafe_emblem_url_is_omitted(self):
         _, body = self.render(banner_url="javascript:alert(1)")
         self.assertNotIn("<img", body)
+
+    def test_configured_body_and_calendar(self):
+        self.event.confirmation_email_message = "<p>Hello {guest_name}</p>"
+        self.invitation.guest_name = "<script>bad</script>"
+        _, body = self.render("Confirmation", confirmed=1)
+        self.assertIn("Hello &lt;script&gt;bad&lt;/script&gt;", body)
+        self.assertNotIn("Thank you for responding", body)
+        self.assertIn("calendar.google.com", body)
+        self.assertIn("outlook.office.com", body)
+        self.assertNotIn("private-token", body.split("calendar.google.com")[1].split("</a>")[0])
+        _, body = self.render("Confirmation", confirmed=0)
+        self.assertNotIn("calendar.google.com", body)
