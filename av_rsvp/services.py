@@ -83,6 +83,15 @@ def snapshot(invitation, event):
         for key in ["starts_on", "ends_on"]:
             function[key] = display_datetime(function[key], event.timezone)
     details = public_event_details(event)
+    from av_rsvp.calendar import calendar_links
+    from frappe.utils import get_system_timezone
+
+    details["calendar_links"] = (
+        calendar_links(event, get_system_timezone())
+        if event.enable_add_to_calendar and invitation.response_status == "Attending"
+        and any(person["entry_token"] for person in people)
+        else {}
+    )
     # Explicit projection: no team, guest directory, delivery logs or invitation secrets.
     return dict(
         event=details
