@@ -73,6 +73,7 @@ def deliver_message(log_name):
         attachments = []
         if (
             log.purpose == "Confirmation"
+            and event.enable_add_to_calendar
             and invitation.response_status == "Attending"
             and any(r.allocation == "Confirmed" for r in answers)
         ):
