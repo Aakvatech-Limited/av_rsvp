@@ -2,11 +2,45 @@
 
 from datetime import datetime
 from html import escape
+from html.parser import HTMLParser
 from re import sub
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
+from av_rsvp.calendar import calendar_links
 from av_rsvp.text import event_text
+
+
+class _MessageHTML(HTMLParser):
+    """Allow formatting and HTTPS/mailto links; substitute only in text nodes."""
+
+    tags = {"p", "div", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "blockquote", "a", "h1", "h2", "h3"}
+
+    def __init__(self, values):
+        super().__init__(convert_charrefs=True)
+        self.values = values
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in self.tags:
+            return
+        href = dict(attrs).get("href") or ""
+        if tag == "a" and urlsplit(href).scheme in {"https", "http", "mailto"}:
+            self.parts.append(f'<a href="{escape(href, quote=True)}">')
+        else:
+            style = ' style="margin:0 0 18px;line-height:1.7"' if tag == "p" else ""
+            self.parts.append(f"<{tag}{style}>")
+
+    def handle_endtag(self, tag):
+        if tag in self.tags and tag != "br":
+            self.parts.append(f"</{tag}>")
+
+    def handle_data(self, data):
+        self.parts.append(escape(replace_fields(data, self.values)))
+
+
+def replace_fields(template, values):
+    return sub(r"\{([a-z_]+)\}", lambda match: str(values.get(match[1], match[0]) or ""), template)
 
 
 def confirmation_page_message(template, guest_name, event_title, starts_on):
@@ -58,14 +92,25 @@ def email_content(
     footer = event_text(event.get("footer_text") or "").strip()
     body = paragraph(f"Dear {text(invitation.guest_name)},")
     if purpose == "Confirmation":
-        custom_subject = " ".join((event.get("confirmation_email_subject") or "").splitlines()).strip()
-        subject = custom_subject or f"Your RSVP Confirmation | {event.event_title}"
-        body += paragraph(f"Thank you for responding to <strong>{title}</strong>.")
-        body += paragraph(
-            f"Your response: <strong>{text(invitation.response_status)}</strong>.<br>"
-            f"Confirmed places across functions: {confirmed}.<br>"
-            f"Waitlisted places: {waitlisted}."
+        values = dict(
+            guest_name=invitation.guest_name,
+            event_title=event.event_title,
+            event_date=date,
+            event_time=time,
+            venue=event.venue,
+            host_name=event.get("host_name"),
+            response_status=invitation.response_status,
+            confirmed_places=str(confirmed),
+            waitlisted_places=str(waitlisted),
         )
+        template = event.get("confirmation_email_message") or ""
+        subject = " ".join(replace_fields(event.get("confirmation_email_subject") or "", values).splitlines()).strip()
+        if not subject or not event_text(template).strip():
+            raise ValueError("Configure the confirmation email subject and message on the RSVP Event.")
+        parser = _MessageHTML(values)
+        parser.feed(template)
+        parser.close()
+        body = "".join(parser.parts)
         action = "View Attendance Details"
     elif purpose == "Reminder":
         subject = f"RSVP Reminder | {event.event_title}"
@@ -101,6 +146,11 @@ def email_content(
         f'<p style="margin:0 0 24px;font-size:12px;line-height:1.6;color:#5c6878">'
         f'If the button does not work, <a href="{link}" style="color:#214b75">open your invitation here</a>.</p>'
     )
+    if purpose == "Confirmation" and invitation.response_status == "Attending" and confirmed and event.get("enable_add_to_calendar"):
+        links = calendar_links(event, source_timezone)
+        body += paragraph("Add to your calendar: " + " · ".join(
+            f'<a href="{text(link)}">{text(label)}</a>' for label, link in links.items()
+        ))
     if footer:
         body += paragraphs(event.footer_text)
     elif event.get("host_name"):
