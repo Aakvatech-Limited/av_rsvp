@@ -37,12 +37,15 @@
   "confirmation",
   "show_confirmation_pass_only",
   "confirmation_message",
-  "confirmation_email_subject",
   "team",
   "privacy_notice",
   "event_website",
   "event_web_page",
-  "show_event_information"
+  "show_event_information",
+  "email_configuration",
+  "confirmation_email_subject",
+  "confirmation_email_message",
+  "enable_add_to_calendar"
  ],
  "fields": [
   {
@@ -183,7 +186,9 @@
    "fieldname": "confirmation_email_subject",
    "label": "Confirmation Email Subject",
    "fieldtype": "Data",
-   "description": "Optional subject for response confirmation emails. Leave blank to use the standard subject."
+   "description": "Saved subject for response emails. Supports event and guest placeholders.",
+   "default": "Your RSVP Confirmation | {event_title}",
+   "reqd": 1
   },
   {
    "fieldname": "team",
@@ -278,6 +283,25 @@
    "default": "1",
    "description": "Legacy compatibility setting; use Form Section Order > Hide for Event Information.",
    "hidden": 1
+  },
+  {
+   "fieldname": "email_configuration",
+   "label": "Email Configuration",
+   "fieldtype": "Tab Break"
+  },
+  {
+   "fieldname": "confirmation_email_message",
+   "label": "Confirmation Email Message",
+   "fieldtype": "Text Editor",
+   "default": "<p>Dear {guest_name},</p><p>Thank you for responding to <strong>{event_title}</strong>.</p><p>Your response: <strong>{response_status}</strong>.<br>Confirmed places across functions: {confirmed_places}.<br>Waitlisted places: {waitlisted_places}.</p>",
+   "reqd": 1,
+   "description": "Placeholders: {guest_name}, {event_title}, {event_date}, {event_time}, {venue}, {host_name}, {response_status}, {confirmed_places}, {waitlisted_places}. Use wording suitable for all response statuses."
+  },
+  {
+   "fieldname": "enable_add_to_calendar",
+   "label": "Enable Add to Calendar",
+   "fieldtype": "Check",
+   "default": "1"
   }
  ],
  "permissions": [
